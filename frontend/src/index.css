@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* In your CSS file */
+:root {
+  --primary: #96BBBB;
+  --secondary: #618985;
+  --tertiary: #414535;
+  --light-accent: #F2E3BC;
+  --dark-accent: #C19875;
+}
