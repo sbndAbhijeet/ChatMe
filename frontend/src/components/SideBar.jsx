@@ -1,10 +1,19 @@
 // Sidebar.jsx
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { useHistory } from '../hooks/ChatHistory';
+import {MoreVertical} from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"
+
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const {id} = useParams();
+  const {isTyping} = useHistory();
+  const [showMenu, setShowMenu] = useState({menu: false, key: -1});
+  const [rename, setRename] = useState({id: -1, rename: false})
 
   const navItems = [
     { path: '/', icon: '💬', label: 'New Chat', end: true },
@@ -12,12 +21,44 @@ const Sidebar = () => {
     // Add more items as needed
   ];
 
-  const chatHistory = [
-    { id: 1, title: 'Marketing strategy ideas' },
-    { id: 2, title: 'Python code review' },
-    { id: 3, title: 'Content calendar planning' },
-    // Would typically come from your API/local storage
-  ];
+  const {history, setHistory} = useHistory();
+
+  useEffect(() => {
+    console.log(history)
+  },[history])
+
+  const renameSession = (chatId) => {
+    if(rename.id !== -1 && chatId === rename.id){
+      setRename({rename: !rename.rename, id: chatId})
+    } else {
+      setRename({rename: true, id: chatId})
+    }
+    // setRename({id: chatId, rename: !rename.rename})
+    // if(rename.rename === true) console.log(rename)
+  }
+
+  const handleTitle = () => {
+    setHistory(prev => 
+      prev.map(chat => 
+        chat.id === rename.id ? {...chat, title: rename.title} : chat
+      )
+    )
+
+    // Optionally send to backend here
+  // await axios.post('/api/updateChat', { id: chatId, title: rename.title });
+
+    setRename({ id: -1, rename: false, title: "" });
+    
+  }
+
+  const deleteSession = () => {
+    console.log(`Delete-${showMenu.key}`)
+    const session = showMenu.key;
+    console.log(history)
+    const newHistory = history.filter((chat) => chat.id !== session)
+    setHistory(newHistory)
+  }
+
 
   return (
     <div className={`flex flex-col h-full bg-[#414535] text-[#F2E3BC] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -31,8 +72,9 @@ const Sidebar = () => {
 
       {/* New Chat Button */}
       <Link
-        to="/"
+        to="/chatbot/0"
         className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === '/' ? 'bg-[#618985]/50' : ''}`}
+        
       >
         <span className="p-3 text-xl">{'💬'}</span>
         {!isCollapsed && <span className="ml-2">New Chat</span>}
@@ -43,13 +85,65 @@ const Sidebar = () => {
         <div className="px-3 mb-4">
           <h3 className="text-xs uppercase font-semibold text-[#C19875] mb-2 px-2">Recent Chats</h3>
           <div className="space-y-1">
-            {chatHistory.map(chat => (
+            { history.slice().reverse().map(chat => (
               <Link
                 key={chat.id}
-                to={`/chat/${chat.id}`} // You would need to set up this route
-                className="block px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30 truncate"
+                to={`/chatbot/${chat.id}`} // You would need to set up this route
+                className={`block px-3 py-2 text-sm rounded-md truncate ${showMenu.key === chat.id ? 'relative group' : ""}
+                  ${chat.id !== Number(id) && isTyping ? "pointer-events-none text-gray-400" : "hover:bg-[#618985]/30"} `}
+                onClick={(e) => {
+                  if(chat.id !== Number(id) && isTyping){
+                    e.preventDefault();
+                  }
+                }}
               >
-                {chat.title}
+              
+                <div className='flex justify-between'>
+                  {rename.id === chat.id && rename.rename === true ? 
+                  <input 
+                  type="text" 
+                  className='bg-[#618985]/30 rounded-md px-2 py-1 text-smaw'
+                  defaultValue={chat.title}
+                  // value={}
+                  onChange = {(e) => setRename({...rename, title: e.target.value})}
+                  /> : <p>{chat.title}</p>}
+                  
+                  {isTyping ? <p className={`${(chat.id === Number(id) && isTyping)? "w-4 h-4 border-3 border-dashed rounded-full animate-spin border-[#96BBBB]" : ""}`}></p> : 
+                  <button 
+                  onClick = {() => {
+                    if(showMenu.key !== -1 && chat.id === showMenu.key){
+                      setShowMenu({menu: !showMenu.menu, key: chat.id})
+                    } else {
+                      setShowMenu({menu: true, key: chat.id})
+                    }
+                    
+                    console.log(chat.id)}
+                  }
+                  className='p-1 hover:bg-gray-500 rounded'
+                  >
+                    <MoreVertical size={16} />
+                  </button>}
+                </div>
+
+                {(showMenu.menu && chat.id === showMenu.key) && (
+                  <div className='flex'>
+                    <button
+                      className="p-1 hover:cursor-pointer text-green-600"
+                      onClick={() => renameSession(chat.id)}
+                    >
+                      {rename.rename === true ? 
+                      <FontAwesomeIcon
+                      onClick={() => handleTitle()}
+                      icon={faFloppyDisk} /> : <FontAwesomeIcon icon={faPenToSquare} />}
+                    </button>
+                    <button
+                       className="p-1 hover:cursor-pointer text-red-600"
+                       onClick={() => deleteSession()}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
+                )}
               </Link>
             ))}
           </div>

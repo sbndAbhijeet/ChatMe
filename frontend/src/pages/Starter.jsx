@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Starter = () => {
+
   const features = [
     {
       icon: '🤖',
@@ -59,7 +60,7 @@ const Starter = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              to="/chatbot" 
+              to="/chatbot"
               className="px-8 py-3 bg-[#618985] hover:bg-[#96BBBB] text-white rounded-lg font-medium transition-colors"
             >
               Try Live Demo

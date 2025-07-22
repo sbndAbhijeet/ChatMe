@@ -1,68 +1,123 @@
 import { useEffect, useState, useRef } from 'react';
+import {useParams, useNavigate, useLocation}  from "react-router-dom"
 import { post_message } from "../api/chatApi";
 import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useHistory } from '../hooks/ChatHistory';
 
 function ChatBot() {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
+  const {isTyping, setIsTyping} = useHistory();
   const messagesContainerRef = useRef(null);
+
+  const { id: chat_session} = useParams();
+  const location = useLocation();
+  const {history, setHistory} = useHistory();
+
+  const navigate = useNavigate();
+
+  // Load chat messages for current session
+  useEffect(() => {
+    const currentChat = history.find((chat) => chat.id === Number(chat_session))
+    if(currentChat) setChatHistory(currentChat.messages)
+    if(chat_session === "0"){
+      setChatHistory("")
+    }
+    // console.log(chatHistory)
+    // console.log(history)
+    // console.log(chat_session)
+  },[history, chat_session])
+
+  //Effect to handle initial message after creating a new chat
+  useEffect(() => {
+    const initialMessage = location.state?.initialMessage;
+    if(initialMessage){//then coming from /chatbot/0
+      handleSendMessage(initialMessage)
+
+      //Clear state from location to prevent re-sending on refresh
+      navigate(location.pathname, {replace: true, state: {}})
+    }
+  },[location.state, chat_session])
+
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
+    }    
   }, [chatHistory]);
+
+  const handleSendMessage = async (user_msg) => {
+    const userMessage = {sender: 'user', message: user_msg};
+    setChatHistory(prev => [...prev, userMessage])
+
+    setIsTyping(true)
+    setChatHistory(prev => [...prev, {sender: 'bot', message: "", isLoading: true}])
+
+    try {
+      const botResponse = await post_message(user_msg);
+      const botMessage = {sender: 'bot', message: botResponse}
+
+      setHistory(
+        prevHistory => {
+          return prevHistory.map(chat => {
+            if(chat.id === Number(chat_session)){
+              return {...chat, messages: [...chat.messages, userMessage, botMessage]}
+            }
+            return chat;
+          })
+        });
+
+      //removing loading indicator
+      setChatHistory(prev => prev.filter(msg => !msg.isLoading))
+
+      let index = 0;
+      const interval = setInterval(() => {
+        setChatHistory(prev => {
+          const newHistory = [...prev];
+          newHistory[newHistory.length - 1].message = botResponse.substring(0, index + 1);
+          return newHistory;
+        });
+        index++;
+        if (index === botResponse.length) {
+          clearInterval(interval);
+          setIsTyping(false);
+        }
+      }, 30);
+    }
+    catch (error) {
+      console.error("Error:", error);
+      setIsTyping(false);
+      // Replace loader with an error message
+      setChatHistory(prev => {
+        const newHistory = prev.filter(msg => !msg.isLoading);
+        return [...newHistory, { sender: 'bot', message: "Sorry, something went wrong!" }];
+      });
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim() || isTyping) return;
 
-    // Add user message
-    setChatHistory(prev => [...prev, { sender: 'user', content: message }]);
-    setMessage("");
-    
-    // Show loading
-    setIsTyping(true);
-    setChatHistory(prev => [...prev, { sender: 'bot', content: "", isLoading: true }]);
+    const currentMessage = message;
+    setMessage(""); // Clear input immediately
 
-    try {
-      const res = await post_message(message);
-      
-      // Replace loading with empty message
-      setChatHistory(prev => {
-        const newHistory = [...prev];
-        newHistory.pop();
-        return [...newHistory, { sender: 'bot', content: "" }];
-      });
+    if(chat_session === "0"){
+      const newId = history.length > 0 ? history.length+1 : 1;
 
-      // Typewriter effect
-      let index = 0;
-      const interval = setInterval(() => {
-        setChatHistory(prev => {
-          const newHistory = [...prev];
-          newHistory[newHistory.length - 1].content = res.substring(0, index + 1);
-          return newHistory;
-        });
-        index++;
-        
-        if (index === res.length) {
-          clearInterval(interval);
-          setIsTyping(false);
-        }
-      }, 30);
-      
-    } catch (error) {
-      console.error("Error:", error);
-      setChatHistory(prev => {
-        const newHistory = [...prev];
-        newHistory.pop();
-        return [...newHistory, { sender: 'bot', content: "Sorry, something went wrong!" }];
-      });
-      setIsTyping(false);
+      const newChat = {
+        id: newId,
+        title: `New Chat - ${newId}`,
+        messages: []
+      };
+
+      setHistory(prev => [...prev, newChat])  
+      navigate(`/chatbot/${newId}`, {state: {initialMessage: currentMessage}});
+    } else {
+      await handleSendMessage(currentMessage)
     }
   };
 
@@ -106,7 +161,7 @@ function ChatBot() {
                 ) : (
                   <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {chat.content}
+                      {chat.message}
                     </ReactMarkdown>
                   </div>
                 )}

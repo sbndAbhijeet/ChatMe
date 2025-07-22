@@ -1,12 +1,15 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useMatch, useParams } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import Sidebar from "./SideBar";
 
 const Layout = () => {
   const location = useLocation();
-  const isChatbotPage = location.pathname === '/chatbot';
+  // const parm = useParams();
+  // console.log(parm) // {id: '1'}
+  const match = useMatch("/chatbot/:id");
+  const isChatbotPage = Boolean(match);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2E3BC]/10">
