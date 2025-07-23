@@ -14,9 +14,6 @@ In 1st Phase with just Input and output of raw llm's without any in-memory stora
 Also did some designing of the UI/UX for the chatbot
 ![alt text](/frontend/src/assets/image.png)
 
-Of course\! Here is a great starting README for your project based on the information you provided. Since the project is still in progress, I've created a structure that you can easily update as you add more features and finalize the setup process.
-
-
 ## ✨ Features (Current & Planned)
 
   * **Conversational AI:** Core chat functionality powered by state-of-the-art LLMs like Gemini and OpenAI models.
