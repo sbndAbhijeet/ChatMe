@@ -27,5 +27,6 @@ def read_root():
 @app.post("/api/bot", response_model=MessageOutput)
 def chatbot(user_input: MessageInput):
     result = get_ai_response(user_input.message)
+    # save at database
     return {"reply": result}
 

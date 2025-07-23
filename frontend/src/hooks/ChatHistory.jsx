@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { getHistory, postMessage } from "../api/chatDocs";
 
 export const ChatHistoryContext = createContext(null);
 
@@ -55,8 +56,38 @@ export const ChatHistoryProvider = (props) => {
     ]);
     const [isTyping, setIsTyping] = useState(false);
 
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        const {data, error} = await getHistory();
+        if(error){
+            alert("Error in Fetching data: "+error)
+            return;
+        }
+        setHistory(data);
+    }
+
+    const addUserInput = async (msg) => {
+        const {data, error} = await postMessage(msg)
+        if(error){
+            alert("Error in sending user message: "+error)
+            return;
+        }
+    }
+
+    const createChat = async (chat) => {
+        try {
+            const res = await axios.post('/api/create-chat/', msg);
+            setHistory(prev => [...prev, res.data])
+        } catch (error) {
+            console.error("Failed to create Chat", error)
+        }
+    }
+
     return (
-        <ChatHistoryContext.Provider value={{history, setHistory, isTyping, setIsTyping}}>
+        <ChatHistoryContext.Provider value={{history, setHistory, isTyping, setIsTyping, fetchHistory, addUserInput, createChat}}>
             {props.children}
         </ChatHistoryContext.Provider>
     )

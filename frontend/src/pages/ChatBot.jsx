@@ -5,30 +5,34 @@ import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useHistory } from '../hooks/ChatHistory';
+import {addUserInput, createChat}  from "../api/chatDocs"
 
 function ChatBot() {
   const [message, setMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
   const {isTyping, setIsTyping} = useHistory();
+  const [displayedBotMessage, setDisplayedBotMessage] = useState("");
+
   const messagesContainerRef = useRef(null);
 
-  const { id: chat_session} = useParams();
+  const {history, setHistory, fetchHistory, addUserInput} = useHistory();
+  const { id: chat_session} = useParams();//will be in string
+  const currentChat = history.find(chat => chat.id == Number(chat_session))
+  const chatHistory = chat_session === "0" ? [] : currentChat?.messages ?? [];
   const location = useLocation();
-  const {history, setHistory} = useHistory();
 
   const navigate = useNavigate();
 
   // Load chat messages for current session
-  useEffect(() => {
-    const currentChat = history.find((chat) => chat.id === Number(chat_session))
-    if(currentChat) setChatHistory(currentChat.messages)
-    if(chat_session === "0"){
-      setChatHistory("")
-    }
-    // console.log(chatHistory)
-    // console.log(history)
-    // console.log(chat_session)
-  },[history, chat_session])
+  // useEffect(() => {
+  //   const currentChat = history.find((chat) => chat.id === Number(chat_session))
+  //   if(currentChat) setChatHistory(currentChat.messages)
+  //   if(chat_session === "0"){
+  //     setChatHistory("")
+  //   }
+  //   // console.log(chatHistory)
+  //   // console.log(history)
+  //   // console.log(chat_session)
+  // },[history, chat_session])
 
   //Effect to handle initial message after creating a new chat
   useEffect(() => {
@@ -51,35 +55,35 @@ function ChatBot() {
 
   const handleSendMessage = async (user_msg) => {
     const userMessage = {sender: 'user', message: user_msg};
-    setChatHistory(prev => [...prev, userMessage])
+    await addUserInput(userMessage)
+    const tempId = Number(chat_session)
 
     setIsTyping(true)
-    setChatHistory(prev => [...prev, {sender: 'bot', message: "", isLoading: true}])
+
+    setHistory(prev => 
+      prev.map(chat => 
+        chat.id === tempId
+        ? {...chat, messages: [...chat.messages, userMessage, {sender: "bot", message: "", isLoading: true}]}
+        : chat
+      )
+    )
 
     try {
       const botResponse = await post_message(user_msg);
       const botMessage = {sender: 'bot', message: botResponse}
 
       setHistory(
-        prevHistory => {
-          return prevHistory.map(chat => {
-            if(chat.id === Number(chat_session)){
-              return {...chat, messages: [...chat.messages, userMessage, botMessage]}
-            }
-            return chat;
+        prev => 
+          prev.map(chat => {
+            chat.id === tempId ?
+            {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), botMessage]}
+            : chat
           })
-        });
-
-      //removing loading indicator
-      setChatHistory(prev => prev.filter(msg => !msg.isLoading))
-
+        );
+      
       let index = 0;
       const interval = setInterval(() => {
-        setChatHistory(prev => {
-          const newHistory = [...prev];
-          newHistory[newHistory.length - 1].message = botResponse.substring(0, index + 1);
-          return newHistory;
-        });
+        setDisplayedBotMessage(botResponse.substring(0, index+1));
         index++;
         if (index === botResponse.length) {
           clearInterval(interval);
@@ -91,10 +95,13 @@ function ChatBot() {
       console.error("Error:", error);
       setIsTyping(false);
       // Replace loader with an error message
-      setChatHistory(prev => {
-        const newHistory = prev.filter(msg => !msg.isLoading);
-        return [...newHistory, { sender: 'bot', message: "Sorry, something went wrong!" }];
-      });
+      setHistory(prev => 
+        prev.map(chat => 
+          chat.id === tempId ?
+          {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: "Sorry, something went wrong!" }]
+          }
+        )
+      );
     }
   }
 
@@ -108,18 +115,21 @@ function ChatBot() {
     if(chat_session === "0"){
       const newId = history.length > 0 ? history.length+1 : 1;
 
-      const newChat = {
+      await createChat({
         id: newId,
         title: `New Chat - ${newId}`,
         messages: []
-      };
-
-      setHistory(prev => [...prev, newChat])  
+      });
+       
       navigate(`/chatbot/${newId}`, {state: {initialMessage: currentMessage}});
     } else {
       await handleSendMessage(currentMessage)
     }
   };
+
+  if (!currentChat && chat_session !== "0") {
+    return (<p>Chat session not found!</p>)
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -145,7 +155,11 @@ function ChatBot() {
             </div>
           </div>
         ) : (
-          chatHistory.map((chat, index) => (
+          chatHistory.map((chat, index) => {
+            const isLast = index === chat.length-1;
+            const isBot = chat.sender !== "user";
+
+            return (
             <div key={index} className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`rounded-lg p-3 max-w-3xl ${
                 chat.sender === 'user' 
@@ -161,13 +175,14 @@ function ChatBot() {
                 ) : (
                   <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {chat.message}
+                      {isTyping && isLast && isBot ? displayedBotMessage : chat.message}
                     </ReactMarkdown>
                   </div>
                 )}
               </div>
             </div>
-          ))
+            )
+          })
         )}
       </div>
 
