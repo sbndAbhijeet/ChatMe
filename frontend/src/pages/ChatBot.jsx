@@ -75,7 +75,7 @@ function ChatBot() {
     try {
       const botResponse = await processUserInput(tempId, user_msg);
       console.log(botResponse)
-      const botMessage = {sender: 'bot', message: botResponse}
+      const botMessage = {sender: 'bot', message: ''}
 
       setHistory(
         prev => 
@@ -88,11 +88,28 @@ function ChatBot() {
       
       let index = 0;
       const interval = setInterval(() => {
-        setDisplayedBotMessage(botResponse.substring(0, index+1));
+        setHistory(prev => prev.map(
+          chat => chat.id === tempId 
+          ? {
+            ...chat, 
+            messages: chat.messages.map((m,i) => i === chat.messages.length - 1 ?
+            {...m, message: botResponse.substring(0, index+1)} : m)
+          }
+          : chat
+        ))
         index++;
         if (index === botResponse.length) {
           clearInterval(interval);
           setIsTyping(false);
+
+          // Now insert the full bot message into history
+          setHistory(prev => prev.map(chat =>
+            chat.id === tempId
+              ? { ...chat, messages: [...chat.messages.slice(0, -1), { sender: 'bot', message: botResponse }] }
+              : chat
+          ));
+
+
         }
       }, 30);
     }
@@ -120,6 +137,14 @@ function ChatBot() {
     if(chat_session === "0"){
       const newId = history.length > 0 ? history.length+1 : 1;
       const doc_id = await createChat(newId);
+      setHistory(prev => [
+        ...prev,
+        {
+          id: doc_id,
+          title:`New Chat - ${newId}`,
+          messages:[{sender: 'bot', message: currentMessage}]
+        }
+      ])
       navigate(`/chatbot/${String(doc_id)}`, {state: {initialMessage: currentMessage}});
     } else {
       await handleSendMessage(currentMessage);
