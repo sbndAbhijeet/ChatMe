@@ -5,7 +5,6 @@ import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useHistory } from '../hooks/ChatHistory';
-import {addUserInput, createChat}  from "../api/chatDocs"
 
 function ChatBot() {
   const [message, setMessage] = useState("");
@@ -14,13 +13,19 @@ function ChatBot() {
 
   const messagesContainerRef = useRef(null);
 
-  const {history, setHistory, fetchHistory, addUserInput} = useHistory();
+  const {history, setHistory, processUserInput, createChat, historyLoading} = useHistory();
   const { id: chat_session} = useParams();//will be in string
-  const currentChat = history.find(chat => chat.id == Number(chat_session))
+  const navigate = useNavigate();
+  // console.log(typeof(chat_session))
+  // if (historyLoading) return <div>Loading...</div>;
+  const currentChat = history.find(chat => String(chat.id) === chat_session);
+
+
+  // console.log(currentChat)
   const chatHistory = chat_session === "0" ? [] : currentChat?.messages ?? [];
   const location = useLocation();
 
-  const navigate = useNavigate();
+  
 
   // Load chat messages for current session
   // useEffect(() => {
@@ -55,8 +60,7 @@ function ChatBot() {
 
   const handleSendMessage = async (user_msg) => {
     const userMessage = {sender: 'user', message: user_msg};
-    await addUserInput(userMessage)
-    const tempId = Number(chat_session)
+    const tempId = chat_session;
 
     setIsTyping(true)
 
@@ -69,16 +73,17 @@ function ChatBot() {
     )
 
     try {
-      const botResponse = await post_message(user_msg);
+      const botResponse = await processUserInput(tempId, user_msg);
+      console.log(botResponse)
       const botMessage = {sender: 'bot', message: botResponse}
 
       setHistory(
         prev => 
-          prev.map(chat => {
+          prev.map(chat => 
             chat.id === tempId ?
             {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), botMessage]}
             : chat
-          })
+          )
         );
       
       let index = 0;
@@ -99,7 +104,7 @@ function ChatBot() {
         prev.map(chat => 
           chat.id === tempId ?
           {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: "Sorry, something went wrong!" }]
-          }
+          } : chat 
         )
       );
     }
@@ -114,18 +119,16 @@ function ChatBot() {
 
     if(chat_session === "0"){
       const newId = history.length > 0 ? history.length+1 : 1;
-
-      await createChat({
-        id: newId,
-        title: `New Chat - ${newId}`,
-        messages: []
-      });
-       
-      navigate(`/chatbot/${newId}`, {state: {initialMessage: currentMessage}});
+      const doc_id = await createChat(newId);
+      navigate(`/chatbot/${String(doc_id)}`, {state: {initialMessage: currentMessage}});
     } else {
-      await handleSendMessage(currentMessage)
+      await handleSendMessage(currentMessage);
     }
   };
+
+  // if (!currentChat) {
+  //   return <div>Loading chat...</div>; // or skeleton loader
+  // }
 
   if (!currentChat && chat_session !== "0") {
     return (<p>Chat session not found!</p>)

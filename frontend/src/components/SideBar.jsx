@@ -12,8 +12,9 @@ const Sidebar = () => {
   const location = useLocation();
   const {id} = useParams();
   const {isTyping} = useHistory();
-  const [showMenu, setShowMenu] = useState({menu: false, key: -1});
+  const [showMenu, setShowMenu] = useState({menu: false, key: ""});
   const [rename, setRename] = useState({id: -1, rename: false})
+  const [selectedId, setSelectedId] = useState(null);
 
   const navItems = [
     { path: '/', icon: '💬', label: 'New Chat', end: true },
@@ -21,11 +22,22 @@ const Sidebar = () => {
     // Add more items as needed
   ];
 
-  const {history, setHistory} = useHistory();
+  const {history, setHistory, renameChat, deleteChatSession} = useHistory();
 
-  useEffect(() => {
-    console.log(history)
-  },[history])
+  //load saved chat on mount
+  // useEffect(() => {
+  //   const savedId = localStorage.getItem("currentChatId");
+  //   if (savedId) {
+  //     setSelectedId(savedId);
+  //   }
+  // }, []);
+
+  // //when selectedId changes, update localStorage
+  // useEffect(() => {
+  //   if (selectedId) {
+  //     localStorage.setItem("currentChatId", selectedId);
+  //   }
+  // }, [selectedId]);
 
   const renameSession = (chatId) => {
     if(rename.id !== -1 && chatId === rename.id){
@@ -37,7 +49,7 @@ const Sidebar = () => {
     // if(rename.rename === true) console.log(rename)
   }
 
-  const handleTitle = () => {
+  const handleTitle = async () => {
     setHistory(prev => 
       prev.map(chat => 
         chat.id === rename.id ? {...chat, title: rename.title} : chat
@@ -45,18 +57,20 @@ const Sidebar = () => {
     )
 
     // Optionally send to backend here
-  // await axios.post('/api/updateChat', { id: chatId, title: rename.title });
+    await renameChat(rename.id, rename.title);
 
     setRename({ id: -1, rename: false, title: "" });
     
   }
 
-  const deleteSession = () => {
+  const deleteSession = async () => {
     console.log(`Delete-${showMenu.key}`)
     const session = showMenu.key;
     console.log(history)
     const newHistory = history.filter((chat) => chat.id !== session)
     setHistory(newHistory)
+
+    await deleteChatSession(session);
   }
 
 
@@ -85,14 +99,14 @@ const Sidebar = () => {
         <div className="px-3 mb-4">
           <h3 className="text-xs uppercase font-semibold text-[#C19875] mb-2 px-2">Recent Chats</h3>
           <div className="space-y-1">
-            { history.slice().reverse().map(chat => (
+            { history.filter(chat => chat && chat.id).slice().reverse().map(chat => (
               <Link
                 key={chat.id}
                 to={`/chatbot/${chat.id}`} // You would need to set up this route
                 className={`block px-3 py-2 text-sm rounded-md truncate ${showMenu.key === chat.id ? 'relative group' : ""}
-                  ${chat.id !== Number(id) && isTyping ? "pointer-events-none text-gray-400" : "hover:bg-[#618985]/30"} `}
+                  ${chat.id !== id && isTyping ? "pointer-events-none text-gray-400" : "hover:bg-[#618985]/30"} `}
                 onClick={(e) => {
-                  if(chat.id !== Number(id) && isTyping){
+                  if(chat.id !== id && isTyping){
                     e.preventDefault();
                   }
                 }}
@@ -108,7 +122,7 @@ const Sidebar = () => {
                   onChange = {(e) => setRename({...rename, title: e.target.value})}
                   /> : <p>{chat.title}</p>}
                   
-                  {isTyping ? <p className={`${(chat.id === Number(id) && isTyping)? "w-4 h-4 border-3 border-dashed rounded-full animate-spin border-[#96BBBB]" : ""}`}></p> : 
+                  {isTyping ? <p className={`${(chat.id === id && isTyping)? "w-4 h-4 border-3 border-dashed rounded-full animate-spin border-[#96BBBB]" : ""}`}></p> : 
                   <button 
                   onClick = {() => {
                     if(showMenu.key !== -1 && chat.id === showMenu.key){

@@ -5,9 +5,9 @@ import App from './App.jsx'
 import { ChatHistoryProvider } from './hooks/ChatHistory.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // <StrictMode>
     <ChatHistoryProvider>
       <App />
     </ChatHistoryProvider>
-  </StrictMode>,
+  // </StrictMode>,
 )

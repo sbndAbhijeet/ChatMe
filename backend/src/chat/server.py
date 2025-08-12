@@ -1,13 +1,52 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status, WebSocket
+from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from bson import ObjectId
 from pydantic import BaseModel
-from main import get_ai_response
 
-app = FastAPI()
+from main import get_ai_response
+import uvicorn
+
+from dotenv import load_dotenv
+from dal import ChatBot, HistorySummary
+import os
+load_dotenv()
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+COLLECTION_NAME = "lumin_chatbot"
+MONGODB_URI = os.getenv("MONGODB_URI")
+DEBUG = os.getenv("DEBUG")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        client = AsyncIOMotorClient(MONGODB_URI, serverSelectionTimeoutMS = 5000)
+        database = client["LuminAI_db"]
+
+        #create collection if it doesn't exist
+        if COLLECTION_NAME not in await database.list_collection_names():
+            await database.create_collection(COLLECTION_NAME)
+
+        lumin_chatbot = database.get_collection(COLLECTION_NAME)
+        app.chatbot_dal = ChatBot(lumin_chatbot)
+        yield
+
+    except Exception as e:
+        print(f"Failed to connect to Mongodb: {e}")
+        raise
+    finally:
+        client.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"], # React app origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -23,10 +62,50 @@ class MessageOutput(BaseModel):
 def read_root():
     return {"Hello": "World"}
 
+# chatHistory data getting
+@app.get("/api/chat_history")
+async def get_chatbot_history() -> list[HistorySummary]:
+    return [i async for i in app.chatbot_dal.get_chat_history()]
 
-@app.post("/api/bot", response_model=MessageOutput)
-def chatbot(user_input: MessageInput):
+class ChatModel(BaseModel):
+    id: str
+    messages: list
+
+@app.get("/api/chat_session/{doc_id}")
+async def get_current_chat(doc_id: str):
+    chat = await app.chatbot_dal.get_current_chat(doc_id)
+    return {"id": str(chat["_id"]), "messages": chat["messages"]}
+
+@app.post("/api/chatbot/lists/{chat_id}", status_code=status.HTTP_201_CREATED)
+async def create_new_chat(chat_id: int):
+    return {
+        "id": await app.chatbot_dal.create_new_chat(chat_id),
+        "title": f"New Chat - {chat_id}"
+    }
+
+
+@app.post("/api/save_response/{id}" , response_model=MessageOutput)
+async def process_save_responses(id: str, user_input: MessageInput):
+    print(f"Received request: id={id}, message={user_input.message}")
+    try:
+        object_id = ObjectId(id)  # Convert string to ObjectId
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
     result = get_ai_response(user_input.message)
     # save at database
+    await app.chatbot_dal.save_sender_response(object_id, "bot", result)
+    # if result:
+    #     print(result)
     return {"reply": result}
 
+@app.delete("/api/delete_chat/{doc_id}")
+async def delete_chat(doc_id: str) -> bool:
+    return await app.chatbot_dal.delete_chat(doc_id)
+
+
+class RenameRequest(BaseModel):
+    title: str
+@app.patch("/api/chat_rename/{doc_id}")
+async def rename_chat_title(doc_id: str, request: RenameRequest):
+    return await app.chatbot_dal.rename_chat_title(doc_id, request.title)

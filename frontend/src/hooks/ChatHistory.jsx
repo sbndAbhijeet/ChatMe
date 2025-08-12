@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getHistory, postMessage } from "../api/chatDocs";
+import { getHistory, postMessage, renameTitle, create_new_chat, deleteChat, getOngoingChat } from "../api/chatDocs";
 
 export const ChatHistoryContext = createContext(null);
 
@@ -9,8 +9,113 @@ export const useHistory = () => {
 
 export const ChatHistoryProvider = (props) => {
 
-    const [history, setHistory] = useState([
-        { 
+    const [history, setHistory] = useState([]);
+    // Would typically come from your API/local storage
+    const [isTyping, setIsTyping] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
+
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        const {data, error} = await getHistory();
+        if(error){
+            alert("Error in Fetching data: "+error)
+            return;
+        }
+        // Don't set history until data is ready
+        if (data) setHistory(data);
+        else setHistory(history);
+    }
+
+
+    // const updateOngoingChat = (docId, data) => {
+    //     const chatData = history.find(
+    //         item => item._id === docId
+    //     )
+    // }
+
+    const processUserInput = async (docId, msg) => {
+        // Add the user's message to history immediately
+        // setHistory(prev =>
+        //     prev.map(chat =>
+        //         chat.id === docId
+        //             ? { ...chat, messages: [...chat.messages, { sender: "user", text: msg }] }
+        //             : chat
+        //     )
+        // );
+
+        const { data, error } = await postMessage(docId, msg);
+        if (error) return;
+
+        // Add AI reply when it arrives
+        // setHistory(prev =>
+        //     prev.map(chat =>
+        //         chat.id === docId
+        //             ? { ...chat, messages: [...chat.messages, { sender: "bot", text: data.reply }] }
+        //             : chat
+        //     )
+        // );
+        return data.reply;
+    };
+
+
+    const createChat = async (chatId) => {
+        const {data, error} = await create_new_chat(chatId);
+        if(error){
+            alert("Error in creating new chat: "+error)
+            return;
+        }
+        fetchHistory();
+        return data.id;
+    }
+
+    const renameChat = async (docId, title) => {
+        const {data, error} = await renameTitle(docId, title);
+        if(error){
+            alert("Error in renaming chat: "+error)
+            return;
+        }
+        fetchHistory();
+        return data;
+    }
+
+    const deleteChatSession = async (docId) => {
+        const {data, error} = await deleteChat(docId);
+        if(error){
+            alert("Error in deleting chat: "+error)
+            return;
+        }
+        fetchHistory();
+        return data;
+    }
+    
+
+    return (
+        <ChatHistoryContext.Provider 
+        value= {{
+            history,
+            setHistory,
+            isTyping, 
+            setIsTyping, 
+            fetchHistory, 
+            processUserInput, 
+            createChat, 
+            renameChat, 
+            deleteChatSession,
+            setHistoryLoading
+        }}
+        >
+            {props.children}
+        </ChatHistoryContext.Provider>
+    )
+}
+
+
+//Example
+/*
+{ 
             id: 1,
             title: 'Marketing strategy ideas',
             messages: [
@@ -52,43 +157,4 @@ export const ChatHistoryProvider = (props) => {
             }
         ]
         },
-    // Would typically come from your API/local storage
-    ]);
-    const [isTyping, setIsTyping] = useState(false);
-
-    useEffect(() => {
-        fetchHistory();
-    }, []);
-
-    const fetchHistory = async () => {
-        const {data, error} = await getHistory();
-        if(error){
-            alert("Error in Fetching data: "+error)
-            return;
-        }
-        setHistory(data);
-    }
-
-    const addUserInput = async (msg) => {
-        const {data, error} = await postMessage(msg)
-        if(error){
-            alert("Error in sending user message: "+error)
-            return;
-        }
-    }
-
-    const createChat = async (chat) => {
-        try {
-            const res = await axios.post('/api/create-chat/', msg);
-            setHistory(prev => [...prev, res.data])
-        } catch (error) {
-            console.error("Failed to create Chat", error)
-        }
-    }
-
-    return (
-        <ChatHistoryContext.Provider value={{history, setHistory, isTyping, setIsTyping, fetchHistory, addUserInput, createChat}}>
-            {props.children}
-        </ChatHistoryContext.Provider>
-    )
-}
+*/
