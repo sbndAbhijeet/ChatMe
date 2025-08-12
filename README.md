@@ -5,14 +5,73 @@
 
 Lumin is an intelligent chat application designed to be a powerful, multi-faceted AI assistant. Inspired by conversational AIs like Google's Gemini, Lumin aims to provide a seamless chat experience with a dynamic user interface. The long-term vision is to integrate complex features like n8n-style dynamic workflows, multi-tool AI capabilities, and much more.
 
-This project is currently under active development.
+`This project is currently under active development.`
 
-## Phase 1
-In 1st Phase with just Input and output of raw llm's without any in-memory storage and history
-![alt text](/frontend/src/assets/image-1.png)
+---
 
-Also did some designing of the UI/UX for the chatbot
-![alt text](/frontend/src/assets/image.png)
+## Project Development Update: AI Chatbot with FastAPI + MongoDB + React
+
+
+### Phase 1: Foundation Establishment
+- Implemented core LLM integration with direct input/output streaming
+- Developed initial UI/UX framework for the chatbot interface
+  - Created interactive chat simulation
+  - Implemented temporary chat management features (edit/delete titles)
+  - Added loading animations and effects
+  - ![Chatbot UI Preview](/frontend/src/assets/image.png)
+  - ![Basic LLM Flow](/frontend/src/assets/image-1.png)
+
+### Phase 2: Backend Integration & Architecture
+- **Backend System**:
+  - Implemented FastAPI with clean architecture
+  - Integrated MongoDB using modern async libraries:
+    - Motor for async database access
+    - Beanie for ODM (Object Document Mapping)
+    - AIOStream for efficient data streaming
+  - Designed robust Data Access Layer following database best practices
+
+- **Frontend Improvements**:
+  - Re-engineered React components for backend compatibility
+  - Implemented REST API communication using Axios
+  - Resolved complex debugging challenges in frontend-backend integration
+  - Maintained existing UI/UX quality while adding real functionality
+
+- **Current Capabilities**:
+  - Fully functional chatbot with persistent storage
+  - Clean architecture implementation
+  - Responsive and interactive user interface
+  <video src="Phase_2.mp4" controls title="Demo" width="500"></video>
+
+## Next Phase Roadmap: Tool Integration
+
+### Phase 3 Objectives:
+1. **Basic Tool Integration**:
+   - Implement plugin system for extendable functionality
+   - Add core tools (calculator, web search, etc.)
+   - Develop tool selection UI components
+
+2. **Enhanced Architecture**:
+   - Abstract tool interface layer
+   - Implement tool routing system
+   - Add tool-specific context management
+
+3. **UI Improvements**:
+   - Tool visualization components
+   - Interactive tool selection interface
+   - Enhanced error handling for tool operations
+
+---
+
+### Key Achievements:
+✔️ Successful implementation of clean architecture  
+✔️ Effective async backend with MongoDB integration  
+✔️ Maintained UI quality through architectural changes  
+✔️ Established foundation for future extensibility  
+
+### Challenges Faced:
+❌ Complex debugging challenges in frontend-backend integration  
+❌ Intermittent errors in tool operations due to asynchronous behavior
+
 
 ## ✨ Features (Current & Planned)
 
@@ -54,21 +113,27 @@ cd ChatMe
 # Example:
 # cd frontend
 # npm install
-# npm start
+# npm run dev
 
 # --- Backend Setup ---
+# Make sure you have Python 3.9+ and uv installed
+## Installation
+
+# 1. Install `uv` (if not installed):
+# pip install uv
+
 # (Instructions to be added)
 # Example:
 # cd backend
-# pip install -r requirements.txt
-# uvicorn main:app --reload
+# uv pip install -r requirements.txt
+# uv run fastapi dev src/chat/server.py
 
 # --- Environment Variables ---
 # Create a .env file and add your credentials
 # Example:
-# OPENAI_API_KEY="your_openai_key"
 # GEMINI_API_KEY="your_gemini_key"
 # MONGODB_URI="your_mongodb_connection_string"
+# DEBUG="true"
 ```
 
 ## 🗺️ Project Roadmap

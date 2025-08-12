@@ -43,6 +43,7 @@ function ChatBot() {
   useEffect(() => {
     const initialMessage = location.state?.initialMessage;
     if(initialMessage){//then coming from /chatbot/0
+      
       handleSendMessage(initialMessage)
 
       //Clear state from location to prevent re-sending on refresh
@@ -137,15 +138,11 @@ function ChatBot() {
     if(chat_session === "0"){
       const newId = history.length > 0 ? history.length+1 : 1;
       const doc_id = await createChat(newId);
-      setHistory(prev => [
-        ...prev,
-        {
-          id: doc_id,
-          title:`New Chat - ${newId}`,
-          messages:[{sender: 'bot', message: currentMessage}]
-        }
-      ])
-      navigate(`/chatbot/${String(doc_id)}`, {state: {initialMessage: currentMessage}});
+      
+      
+      // Small delay to let state settle
+        navigate(`/chatbot/${String(doc_id)}`, { state: { initialMessage: currentMessage } });
+  
     } else {
       await handleSendMessage(currentMessage);
     }
@@ -156,6 +153,7 @@ function ChatBot() {
   // }
 
   if (!currentChat && chat_session !== "0") {
+    navigate("/chatbot/0")
     return (<p>Chat session not found!</p>)
   }
 
