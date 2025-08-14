@@ -8,3 +8,13 @@
   --light-accent: #F2E3BC;
   --dark-accent: #C19875;
 }
+
+/* in tailwind.css */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}

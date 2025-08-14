@@ -153,9 +153,20 @@ function ChatBot() {
   // }
 
   if (!currentChat && chat_session !== "0") {
-    navigate("/chatbot/0")
-    return (<p>Chat session not found!</p>)
+    navigate("/chatbot/0");
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 bg-[#F2E3BC] animate-fadeIn">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-4 h-4 rounded-full bg-[#618985] animate-ping"></div>
+          <div className="w-4 h-4 rounded-full bg-[#96BBBB] animate-ping delay-150"></div>
+          <div className="w-4 h-4 rounded-full bg-[#414535] animate-ping delay-300"></div>
+        </div>
+        <p className="text-lg font-semibold text-[#414535]">Chat session not found</p>
+        <p className="text-sm text-[#414535]/70">Redirecting you to a new chat...</p>
+      </div>
+    );
   }
+
 
   return (
     <div className="flex flex-col h-full">

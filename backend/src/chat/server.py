@@ -92,7 +92,7 @@ async def process_save_responses(id: str, user_input: MessageInput):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
     await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
-    result = get_ai_response(user_input.message)
+    result = get_ai_response(user_input.message, id)
     # save at database
     await app.chatbot_dal.save_sender_response(object_id, "bot", result)
     # if result:

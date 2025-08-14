@@ -40,7 +40,7 @@ Lumin is an intelligent chat application designed to be a powerful, multi-facete
   - Fully functional chatbot with persistent storage
   - Clean architecture implementation
   - Responsive and interactive user interface
-  <video src="Phase_2.mp4" controls title="Demo" width="500"></video>
+<video src="Phase_2.mp4" controls title="Demo" width="500"></video>
 
 ## Next Phase Roadmap: Tool Integration
 
