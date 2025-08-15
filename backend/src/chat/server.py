@@ -5,11 +5,11 @@ from contextlib import asynccontextmanager
 from bson import ObjectId
 from pydantic import BaseModel
 
-from main import get_ai_response
+from .main import get_ai_response, generate_title
 import uvicorn
 
 from dotenv import load_dotenv
-from dal import ChatBot, HistorySummary
+from .dal import ChatBot, HistorySummary
 import os
 load_dotenv()
 
@@ -58,6 +58,9 @@ class MessageInput(BaseModel):
 class MessageOutput(BaseModel):
     reply: str
 
+class RenameRequest(BaseModel):
+    title: str
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -91,21 +94,26 @@ async def process_save_responses(id: str, user_input: MessageInput):
         object_id = ObjectId(id)  # Convert string to ObjectId
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    is_new = await app.chatbot_dal.is_new_thread(object_id)
+
     await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
     result = get_ai_response(user_input.message, id)
-    # save at database
     await app.chatbot_dal.save_sender_response(object_id, "bot", result)
-    # if result:
-    #     print(result)
+
+    # Rewriting Title for new Chats
+    print(is_new)
+    if is_new:
+        new_title = await generate_title(user_input.message)
+        print("new title: ",new_title)
+        await app.chatbot_dal.rename_chat_title(id, new_title)
+        
     return {"reply": result}
 
 @app.delete("/api/delete_chat/{doc_id}")
 async def delete_chat(doc_id: str) -> bool:
     return await app.chatbot_dal.delete_chat(doc_id)
 
-
-class RenameRequest(BaseModel):
-    title: str
 @app.patch("/api/chat_rename/{doc_id}")
 async def rename_chat_title(doc_id: str, request: RenameRequest):
     return await app.chatbot_dal.rename_chat_title(doc_id, request.title)

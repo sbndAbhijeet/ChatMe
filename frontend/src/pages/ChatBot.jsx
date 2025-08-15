@@ -15,7 +15,7 @@ function ChatBot() {
 
   const {history, setHistory, processUserInput, createChat, historyLoading} = useHistory();
   const { id: chat_session} = useParams();//will be in string
-  const navigate = useNavigate();
+  const navigate = useNavigate();   
   // console.log(typeof(chat_session))
   // if (historyLoading) return <div>Loading...</div>;
   const currentChat = history.find(chat => String(chat.id) === chat_session);
@@ -29,7 +29,7 @@ function ChatBot() {
 
   // Load chat messages for current session
   // useEffect(() => {
-  //   const currentChat = history.find((chat) => chat.id === Number(chat_session))
+  //   const currentChat = history.find((chat) => String(chat.id) === chat_session)
   //   if(currentChat) setChatHistory(currentChat.messages)
   //   if(chat_session === "0"){
   //     setChatHistory("")
@@ -50,6 +50,13 @@ function ChatBot() {
       navigate(location.pathname, {replace: true, state: {}})
     }
   },[location.state, chat_session])
+
+  useEffect(() => {
+  if (!currentChat && chat_session !== "0") {
+    // Delay redirect to next render cycle
+    navigate("/chatbot/0", { replace: true });
+  }
+}, [currentChat, chat_session, navigate]);
 
 
   // Auto-scroll to bottom when messages change
@@ -89,6 +96,7 @@ function ChatBot() {
       
       let index = 0;
       const interval = setInterval(() => {
+        // if (!botResponse) return; // wait until botResponse is defined
         setHistory(prev => prev.map(
           chat => chat.id === tempId 
           ? {
@@ -139,9 +147,24 @@ function ChatBot() {
       const newId = history.length > 0 ? history.length+1 : 1;
       const doc_id = await createChat(newId);
       
+      setHistory([...history, 
+        {
+          "id": doc_id,
+          "chat_id": newId,
+          "title": `New Chat - ${newId}`,
+          "messages": [
+            {
+              "sender": "user",
+              "message": currentMessage
+            }
+          ],
+        }
+      ])
       
       // Small delay to let state settle
-        navigate(`/chatbot/${String(doc_id)}`, { state: { initialMessage: currentMessage } });
+      navigate(`/chatbot/${String(doc_id)}`, { state: { initialMessage: currentMessage } });
+
+
   
     } else {
       await handleSendMessage(currentMessage);
@@ -153,7 +176,6 @@ function ChatBot() {
   // }
 
   if (!currentChat && chat_session !== "0") {
-    navigate("/chatbot/0");
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 bg-[#F2E3BC] animate-fadeIn">
         <div className="flex items-center space-x-3 mb-4">

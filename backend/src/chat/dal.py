@@ -54,6 +54,19 @@ class ChatList(BaseModel):
 class ChatBot:
     def __init__(self, chatbot_collection: AsyncIOMotorCollection):
         self._chatbot_collection = chatbot_collection
+
+    async def is_new_thread(self, id: str | ObjectId):
+        "Returns True if this chat thread has no messages yet"
+        doc_id = ObjectId(id)
+        doc = await self._chatbot_collection.find_one({"_id": doc_id}, {"messages": 1})
+
+        # if the doc dosen't exist or messages array is empty -> new thread
+        if doc is None:
+            return True
+        if not doc.get("messages"): #empty list or None
+            return True
+        
+        return False
     
     async def create_new_chat(self, chat_id: int, session=None) -> str:
         response = await self._chatbot_collection.insert_one(
