@@ -7,7 +7,6 @@ from langgraph.checkpoint.mongodb import MongoDBSaver
 from dotenv import load_dotenv
 from openai import OpenAI
 import os
-import asyncio
 
 load_dotenv()
 

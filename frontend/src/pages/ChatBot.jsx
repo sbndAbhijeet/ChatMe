@@ -1,15 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
 import {useParams, useNavigate, useLocation}  from "react-router-dom"
-import { post_message } from "../api/chatApi";
 import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useHistory } from '../hooks/ChatHistory';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
 
 function ChatBot() {
   const [message, setMessage] = useState("");
   const {isTyping, setIsTyping} = useHistory();
   const [displayedBotMessage, setDisplayedBotMessage] = useState("");
+  const [toolMenu, setToolMenu] = useState(false)
 
   const messagesContainerRef = useRef(null);
 
@@ -52,11 +54,11 @@ function ChatBot() {
   },[location.state, chat_session])
 
   useEffect(() => {
-  if (!currentChat && chat_session !== "0") {
-    // Delay redirect to next render cycle
-    navigate("/chatbot/0", { replace: true });
-  }
-}, [currentChat, chat_session, navigate]);
+    if (!currentChat && chat_session !== "0") {
+      // Delay redirect to next render cycle
+      navigate("/chatbot/0", { replace: true });
+    }
+  }, [currentChat, chat_session, navigate]);
 
 
   // Auto-scroll to bottom when messages change
@@ -248,6 +250,54 @@ function ChatBot() {
       {/* Fixed Input Area */}
       <div className="border-t border-[#618985]/30 p-4 shrink-0">
         <form onSubmit={handleSubmit} className="flex gap-2">
+        <div className='relative'>
+          <img 
+            src="../src/assets/glitter.png" 
+            alt="options" 
+            className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform m-2 p-0.5 hover:bg-[#fffeb9] rounded-2xl" 
+            onClick={() => setToolMenu(prev => !prev)}
+          />
+          {/* Dropdown Card */}
+          {toolMenu && (
+            <div className="absolute bottom-8 left-0 w-40 bg-white rounded-xl shadow-lg border border-gray-200 z-50 p-2 animate-fadeIn">
+              <button
+                type="button"
+                onClick={() => console.log("Attach File")}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+              >
+                📎 Attach File
+              </button>
+              <button
+                type="button"
+                onClick={() => console.log("Emoji Picker")}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+              >
+                🌐 Web Search
+              </button>
+              <button
+                type="button"
+                onClick={() => console.log("Voice Input")}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+              >
+                📖 Research
+              </button>
+              <button
+                type="button"
+                onClick={() => console.log("AI Tools")}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+              >
+                🤔 Deep Thinking
+              </button>
+              <button
+                type="button"
+                onClick={() => console.log("Voice Input")}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+              >
+                🎤 Voice Input
+              </button>
+            </div>
+          )}
+        </div>
           <input
             type="text"
             value={message}
