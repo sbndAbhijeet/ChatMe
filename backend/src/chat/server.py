@@ -17,15 +17,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-COLLECTION_NAME = "lumin_chatbot"
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 MONGODB_URI = os.getenv("MONGODB_URI")
+db_name = os.getenv("DB_NAME")
 DEBUG = os.getenv("DEBUG")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         client = AsyncIOMotorClient(MONGODB_URI, serverSelectionTimeoutMS = 5000)
-        database = client["LuminAI_db"]
+        database = client[db_name]
 
         #create collection if it doesn't exist
         if COLLECTION_NAME not in await database.list_collection_names():
@@ -44,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.add_middleware(
+app.add_middleware( 
     CORSMiddleware,
     allow_origins=["http://localhost:5173"], # React app origin
     allow_credentials=True,
@@ -89,7 +90,7 @@ async def create_new_chat(chat_id: int):
 
 @app.post("/api/save_response/{id}" , response_model=MessageOutput)
 async def process_save_responses(id: str, user_input: MessageInput):
-    print(f"Received request: id={id}, message={user_input.message}")
+    # print(f"Received request: id={id}, message={user_input.message}")
     try:
         object_id = ObjectId(id)  # Convert string to ObjectId
     except Exception:
@@ -97,12 +98,12 @@ async def process_save_responses(id: str, user_input: MessageInput):
     
     is_new = await app.chatbot_dal.is_new_thread(object_id)
 
-    await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
     result = get_ai_response(user_input.message, id)
+    await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
     await app.chatbot_dal.save_sender_response(object_id, "bot", result)
 
     # Rewriting Title for new Chats
-    print(is_new)
+    # print(is_new)
     if is_new:
         new_title = await generate_title(user_input.message)
         print("new title: ",new_title)

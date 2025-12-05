@@ -6,12 +6,14 @@ import remarkGfm from 'remark-gfm';
 import { useHistory } from '../hooks/ChatHistory';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
+import Input from '../components/Input';
+
 
 function ChatBot() {
   const [message, setMessage] = useState("");
   const {isTyping, setIsTyping} = useHistory();
   const [displayedBotMessage, setDisplayedBotMessage] = useState("");
-  const [toolMenu, setToolMenu] = useState(false)
+  
 
   const messagesContainerRef = useRef(null);
 
@@ -83,7 +85,31 @@ function ChatBot() {
     )
 
     try {
-      const botResponse = await processUserInput(tempId, user_msg);
+      let botResponse;
+      try {
+        botResponse = await processUserInput(tempId, user_msg);
+      } catch (error) {
+        botResponse = null;
+      }
+
+      if(!botResponse || typeof botResponse !== "string"){
+        setIsTyping(false);
+        setHistory(prev =>
+          prev.map(chat =>
+            chat.id === tempId ?
+            {
+              ...chat,
+              messages: [
+                ...chat.messages.filter(msg => !msg.isLoading),
+                {sender: 'bot', message: "⚠️ Sorry, I couldn't process that. Please try again!"}
+              ]
+            } : chat
+          )
+        );
+        return;
+      }
+      
+
       console.log(botResponse)
       const botMessage = {sender: 'bot', message: ''}
 
@@ -246,75 +272,12 @@ function ChatBot() {
           })
         )}
       </div>
-
-      {/* Fixed Input Area */}
-      <div className="border-t border-[#618985]/30 p-4 shrink-0">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className='relative'>
-          <img 
-            src="../src/assets/glitter.png" 
-            alt="options" 
-            className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform m-2 p-0.5 hover:bg-[#fffeb9] rounded-2xl" 
-            onClick={() => setToolMenu(prev => !prev)}
-          />
-          {/* Dropdown Card */}
-          {toolMenu && (
-            <div className="absolute bottom-8 left-0 w-40 bg-white rounded-xl shadow-lg border border-gray-200 z-50 p-2 animate-fadeIn">
-              <button
-                type="button"
-                onClick={() => console.log("Attach File")}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
-              >
-                📎 Attach File
-              </button>
-              <button
-                type="button"
-                onClick={() => console.log("Emoji Picker")}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
-              >
-                🌐 Web Search
-              </button>
-              <button
-                type="button"
-                onClick={() => console.log("Voice Input")}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
-              >
-                📖 Research
-              </button>
-              <button
-                type="button"
-                onClick={() => console.log("AI Tools")}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
-              >
-                🤔 Deep Thinking
-              </button>
-              <button
-                type="button"
-                onClick={() => console.log("Voice Input")}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
-              >
-                🎤 Voice Input
-              </button>
-            </div>
-          )}
-        </div>
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 border border-[#618985]/50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#96BBBB]"
-            disabled={isTyping}
-          />
-          <button
-            type="submit"
-            disabled={!message.trim() || isTyping}
-            className="bg-[#618985] text-[#F2E3BC] px-4 py-2 rounded-lg hover:bg-[#96BBBB] transition-colors disabled:opacity-50"
-          >
-            {isTyping ? 'Sending...' : 'Send'}
-          </button>
-        </form>
-      </div>
+      <Input
+        message={message}
+        setMessage={setMessage}
+        handleSubmit={handleSubmit}
+        isTyping={isTyping}
+      />
     </div>
   );
 }

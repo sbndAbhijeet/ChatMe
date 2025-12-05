@@ -58,7 +58,7 @@ async def generate_title(user: str):
         ]
     )
     print("inside generate title")
-    # print(response.choices[0].message.content)
+    print(response.choices[0].message.content)
 
     return response.choices[0].message.content
 

@@ -6,7 +6,7 @@ from uuid import uuid4
 
 
 
-class HistorySummary(BaseModel):
+class HistorySummary(BaseModel):# deatiled history of each chat
     id: str
     chat_id: int
     title: str
@@ -56,7 +56,7 @@ class ChatBot:
         self._chatbot_collection = chatbot_collection
 
     async def is_new_thread(self, id: str | ObjectId):
-        "Returns True if this chat thread has no messages yet"
+        "Returns True if this chat thread has no messages yet or invalid chat id"
         doc_id = ObjectId(id)
         doc = await self._chatbot_collection.find_one({"_id": doc_id}, {"messages": 1})
 
