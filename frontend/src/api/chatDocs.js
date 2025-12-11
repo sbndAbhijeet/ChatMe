@@ -28,9 +28,9 @@ export async function create_new_chat(chat_id){
     }
 }
 
-export async function postMessage (docId, msg) {
+export async function postMessage (docId, msg, tools) {
     try {
-        const res = await apiClient.post(`/api/save_response/${String(docId)}`, {message: msg})
+        const res = await apiClient.post(`/api/save_response/${String(docId)}`, {message: msg, tools: tools})
         console.log(res.data);
         return {data: res.data, error: null};
     } catch (error){

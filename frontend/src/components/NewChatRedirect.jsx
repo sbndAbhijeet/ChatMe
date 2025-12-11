@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useHistory } from "../hooks/ChatHistory";
+import { useHistory } from "../hooks/GlobalChatHistory";
 
 const NewChatRedirect = () => {
     const navigate = useNavigate();

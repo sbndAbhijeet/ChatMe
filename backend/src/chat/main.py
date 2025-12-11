@@ -1,34 +1,121 @@
 from typing_extensions import TypedDict
-from typing import Annotated
+from typing import Annotated, Literal
 from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.mongodb import MongoDBSaver
 from dotenv import load_dotenv
 from openai import OpenAI
+from src.web_search.search import clean_web_context
 import os
 
 load_dotenv()
 
-os.environ["GOOGLE_API_KEY"]= os.getenv("GEMINI_API_KEY")
+os.environ["OPENAI_API_KEY"]= os.getenv("OPENAI_API_KEY")
+GRAPH_VERSION = "v1"   # change to v2, v3, v4 whenever your graph changes
+
+
 DB_URI = os.getenv("MONOGB_URI")
-llm = init_chat_model("google_genai:gemini-2.0-flash")
+llm = init_chat_model("openai:gpt-4o-mini", max_retries=2, timeout=30)
 
 COLLECTION_NAME = "luminchat_checkpointer"
 MAX_MESSAGES = 50
 
 client = OpenAI(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    api_key=os.getenv("OPENAI_API_KEY"),
+    # base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 
 class State(TypedDict):
-    messages: Annotated[list, add_messages]
+    messages: Annotated[list, add_messages] #stores conversation history 
+    tools_queue: list[int] 
+    tool_results: list[dict]
+
+def _last_user_message(state: State) -> str:
+    """
+    Helper to get last user message from state.messages.
+    Handles both dict and AIMessage/HumanMessage types.
+    """
+    for msg in reversed(state.get("messages",[])):
+        if isinstance(msg, dict):
+            if msg.get("role") == "user":
+                return msg.get("content", "")
+        else: #assuming langchain message obj
+            if msg.type == "human":
+                return msg.content
+    return ""
+
+# tool id: 1
+def web_tool(state: State):
+    """
+    Processes ONE tool from the queue.
+    - Peeks at first tool_id.
+    - If 1, runs web search, appends result as {"role": "system", "content": "..."}
+    - Pops the tool_id AFTER processing.
+    - Returns updated state.
+    """
+    # ensuring list exist
+    state.setdefault("tools_queue",[])
+    state.setdefault("tool_results", [])
+
+    # if no tool
+    if not state.get("tools_queue"):
+        return state
+    
+    # pop the first tool id
+    tool_id = state["tools_queue"][0]
+    new_tool_results = state.get("tool_results",[]).copy()
+
+    # handling web tools
+    if tool_id == 1:
+        query = _last_user_message(state)
+        try:
+            web_data = clean_web_context(query)
+            print(f'Weather data: {web_data}')
+            new_tool_results.append({
+                "role": "system",
+                "content": f"Web search result:\n{web_data}"
+            })
+        except Exception as e:
+            print(str(e))
+
+    # pop the process tool_id
+    new_queue = state["tools_queue"][1:]
+
+    return {
+        "tools_queue": new_queue,
+        "tool_results": new_tool_results
+    }
+
+
+# Decider (conditional edge)
+def route_tools(state: State) -> Literal['web_tool', 'chatbot']:
+    state.setdefault("tools_queue", [])
+    print(state["tools_queue"])
+    if state['tools_queue']:
+        # peek the next tool
+        # just check don't manipulate tools_queue before
+        next_tool = state["tools_queue"][0]
+        if next_tool == 1:
+            return 'web_tool'
+        # add other tools here
+
+    # if no tools in queue
+    return 'chatbot'
 
 # Bot Response
 def chatbot(state: State):
-    result = llm.invoke(state["messages"])
-    return {"messages": [result]}
+    """
+    Invokes LLM with: messages + tool_results
+    Appends AI response to messages.
+    Clears tool_results after use.
+    """
+    full_input = state['messages'] + state.get('tool_results',[])
+    result = llm.invoke(full_input)
+    return {
+        "messages": [result],
+        "tool_results": [] #clear
+    }
 
 # Title Generation
 async def generate_title(user: str):
@@ -51,7 +138,7 @@ async def generate_title(user: str):
     """
 
     response = client.chat.completions.create(
-        model="gemini-2.0-flash",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user}
@@ -62,14 +149,26 @@ async def generate_title(user: str):
 
     return response.choices[0].message.content
 
+# Add the router as a real (empty) node
+def route_tools_node(state: State):
+    return state  # does nothing, just passes through
 # Graph Building
 graph_builder = StateGraph(State)
-graph_builder.add_node("chatbot", chatbot)
+# builind nodes
+graph_builder.add_node('web_tool', web_tool)
+graph_builder.add_node("chatbot", chatbot) # final llm node
+graph_builder.add_node("route_tools", route_tools_node)
 
-graph_builder.add_edge(START, "chatbot")
+graph_builder.add_edge(START, "route_tools")
+
+graph_builder.add_conditional_edges(
+    "route_tools",
+    route_tools,
+    {"web_tool": "web_tool", "chatbot": "chatbot"}
+)
+
+graph_builder.add_edge("web_tool", "route_tools")  # loop back
 graph_builder.add_edge("chatbot", END)
-
-graph = graph_builder.compile()
 
 def create_checkpointer(checkpointer):
     return graph_builder.compile(checkpointer=checkpointer)
@@ -87,8 +186,13 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-def get_ai_response(user_input: str, doc_id: str):
-    config = {"configurable": {"thread_id": doc_id}}
+def get_ai_response(user_input: str, doc_id: str, tools: list[str]):
+    config = {
+        "configurable": {
+            "thread_id": doc_id,
+            "graph_version": GRAPH_VERSION,
+        }
+    }
 
     with MongoDBSaver.from_conn_string(DB_URI, "LuminAI_db", COLLECTION_NAME) as saver:
         checkpoint = saver.get(config)
@@ -98,7 +202,16 @@ def get_ai_response(user_input: str, doc_id: str):
 
         print("Thread ID:", doc_id)
         graph_with_cp = create_checkpointer(saver)
-        response = graph_with_cp.invoke({"messages": [{"role": "user", "content": user_input}]}, config)
+
+        input_state = {
+            "messages": [{
+                "role": "user",
+                "content": user_input
+            }],
+            "tools_queue": tools.copy(),
+            "tool_results": [],
+        }
+        response = graph_with_cp.invoke(input_state, config)
 
         checkpointer_window(saver, config)
         

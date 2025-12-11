@@ -55,6 +55,7 @@ app.add_middleware(
 
 class MessageInput(BaseModel):
     message: str
+    tools: list
 
 class MessageOutput(BaseModel):
     reply: str
@@ -98,7 +99,7 @@ async def process_save_responses(id: str, user_input: MessageInput):
     
     is_new = await app.chatbot_dal.is_new_thread(object_id)
 
-    result = get_ai_response(user_input.message, id)
+    result = get_ai_response(user_input.message, id, user_input.tools)
     await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
     await app.chatbot_dal.save_sender_response(object_id, "bot", result)
 

@@ -4,7 +4,14 @@ import { useTools } from "../hooks/GlobalTools";
 const SelectedTools = (
 
 ) => {
-    const {selectedTools, setSelectedTools} = useTools();
+    const decode_tools = {
+      1: "🌐 Web Search",
+        2: "📎 Attach File",
+        3: "📖 Research",
+        4: "🤔 Deep Thinking",
+        5: "🎤 Voice Input",
+    }
+    const {chat_session, selectedTools, setSelectedTools} = useTools();
     function removeTool(tool) {
         setSelectedTools(prev => 
             {return prev.filter(t => t !== tool);}
@@ -18,7 +25,7 @@ const SelectedTools = (
                     className="bg-[#618985] text-white px-2 py-1 rounded-md text-sm hover:bg-red-800 cursor-pointer"
                     onClick={() => removeTool(tool)}
                 >
-                    {tool}
+                    {decode_tools[tool]}
                 </span>
             ))}
         </div></>

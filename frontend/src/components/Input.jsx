@@ -3,7 +3,7 @@ import {useParams, useNavigate, useLocation}  from "react-router-dom"
 import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useHistory } from '../hooks/ChatHistory';
+import { useHistory } from '../hooks/GlobalChatHistory';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
 import SelectedTools from "../components/SelectedTools";
@@ -14,19 +14,20 @@ const Input = (
 ) => {
     const [toolMenu, setToolMenu] = useState(false);
     const tools = {
-        "📎 Attach File": 1,
-        "🌐 Web Search": 2,
+      "🌐 Web Search": 1,
+        "📎 Attach File": 2,
         "📖 Research": 3,
         "🤔 Deep Thinking": 4,
         "🎤 Voice Input": 5,
     }
 
-    const {setSelectedTools} = useTools();
+    const {selectedTools, setSelectedTools} = useTools();
     
 
     function handleTool(tool){
-        const val = tools[tool];
-        console.log(val);
+        // const val = tools[tool];
+        // console.log(val);
+        console.log(tool)
         setSelectedTools(prev => {
             if(prev.includes(tool)){
                 //remove
@@ -56,7 +57,7 @@ const Input = (
                     <button 
                     key={val}
                     type="button"
-                    onClick={() => handleTool(label)}
+                    onClick={() => handleTool(val)}
                     className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
                     >
                         {label}

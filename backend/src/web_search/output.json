@@ -1,0 +1,45 @@
+{
+  "query": "What happened at the last wimbledon",
+  "follow_up_questions": null,
+  "answer": null,
+  "images": [],
+  "results": [
+    {
+      "url": "https://www.cnn.com/sport/live-news/wimbledon-final-mens-25-07-13-spt",
+      "title": "Wimbledon final highlights: Jannik Sinner beats Carlos ...",
+      "content": "# Jannik Sinner beats Carlos Alcaraz to win his first Wimbledon title. • **Men’s singles champion:** World No. 1 Jannik Sinner won his first Wimbledon title in a hard-fought battle with two-time reigning champion Carlos Alcaraz. Jannik Sinner is the men’s singles champion at Wimbledon for the first time after he came from a set down to beat two-time defending champion Carlos Alcaraz, 4-6, 6-4, 6-4, 6-4. Sinner looked to have taken control in the first set when he broke his opponent’s serve in the fifth game to take a 3-2 lead, only for Alcaraz to break back twice — the second time thanks in part to a suddenly nervous looking Sinner, who double-faulted to give the Spaniard an advantage, which he wasted no time in taking. Jannik Sinner defeats Carlos Alcaraz 4-6, 6-4, 6-4, 6-4 to win his first Wimbledon title. ## Alcaraz holds to make it 5-4, but Sinner serving for Wimbledon title. Alcaraz holds but Sinner can win the Wimbledon title by holding his next service game. Jannik Sinner serves to Carlos Alcaraz in the fourth set.",
+      "score": 0.8198933,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.news.com.au/sport/tennis/tennis-world-reacts-to-wimbledon-final-horror-as-kate-middleton-watches-on/news-story/e5aa575de4cc8791cf043437168f6a8e",
+      "title": "Tennis world reacts to Wimbledon final horror as Kate ...",
+      "content": "Iga Swiatek demolished Amanda Anisimova 6-0 6-0 in just 57 minutes - the first time a woman has won a final at Wimbledon without dropping a game since 1911, when Britain’s Dorothea Lambert Chambers triumphed by the same scoreline. “Be proud, Anisimova Amanda, Grand Slam finalist,” he wrote on X. “You’d have to be pretty cold not to feel for Amanda Anisimova,” added tennis commentator Craig Gabriel. “Amanda Anisimova crushed her speech in the most beautiful, serene way, and I’ll never forget it,” wrote tennis journo Chris Oddo. “This has been far more about Swiatek being great than Anisimova being awful,” opined tennis journalist Ben Rothenberg. Swiatek, 24, is just the second player in the Open era to win a major without losing a game in the final since Steffi Graf humbled Natalia Zvereva at the 1988 French Open. Swiatek, who now has 100 career Grand Slam match wins, has won the French Open four times and also the US Open, in 2022.",
+      "score": 0.63883525,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.nytimes.com/athletic/live-blogs/wimbledon-2025-live-updates-mens-final-score-result/2FEDhLkXgkxT/",
+      "title": "How Jannik Sinner beat Carlos Alcaraz to win Wimbledon",
+      "content": "Jannik Sinner claimed his first Wimbledon title by beating Carlos Alcaraz in four sets in another pulsating Grand Slam final **Jannik Sinner fought back to beat defending champion Carlos Alcaraz in four sets and win Wimbledon for the first time in his career.** Jannik Sinner prevailed over Carlos Alcaraz in a tight match ultimately decided by two stunning set points, Alcaraz’s grass tools malfunctioning and Sinner’s steadiness behind and against second serves. Wimbledon final: Jannik Sinner beats Carlos Alcaraz to win first Wimbledon title But Sinner won far more second-serve points than Alcaraz, going for power when he was hitting them and when he was returning them, setting up plus-one opportunities that kept his attack percentage high and prevented Alcaraz from mixing up the rhythm of points with his variety.",
+      "score": 0.53509843,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.theguardian.com/sport/live/2025/jul/13/wimbledon-mens-singles-final-jannik-sinner-carlos-alcaraz-live-tennis",
+      "title": "Jannik Sinner wins first Wimbledon title with four-set victory ...",
+      "content": "Jannik Sinner wins first Wimbledon title with four-set victory over Carlos Alcaraz – as it happened. This article is more than 4 months old.",
+      "score": 0.44360042,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.npr.org/2025/07/12/g-s1-77353/swiatek-wimbledon-womens-final-anisimova",
+      "title": "Poland's Iga Świątek thrashes American Amanda ...",
+      "content": "**Poland's Iga Świątek thrashes American Amanda Anisimova in Wimbledon women’s final**  **The Polish player emerged victorious after less than an hour of gameplay.**. # Poland's Iga Świątek thrashes American Amanda Anisimova in Wimbledon women's final. Iga Świątek of Poland holds the trophy after winning the women's singles final match against Amanda Anisimova of the U.S. at the Wimbledon Tennis Championships in London, Saturday, July 12, 2025. The Wimbledon women's final came to an abrupt close on Saturday as Poland's Iga Świątek delivered a swift, crushing defeat against American player Amanda Anisimova. Amanda Anisimova of the U.S. reacts after losing the women's singles final match against Iga Swiatek of Poland at the Wimbledon Tennis Championships in London, Saturday, July 12, 2025. Britain's Kate, Princess of Wales, center, waves as she stands alongside tennis legend Billie Jean King in the Royal Box on Centre Court ahead of the women's singles final at the Wimbledon Tennis Championships in London, Saturday, July 12, 2025.",
+      "score": 0.35936415,
+      "raw_content": null
+    }
+  ],
+  "response_time": 1.07,
+  "request_id": "eacf05af-e0d9-45be-a849-835011ff7ee9"
+}

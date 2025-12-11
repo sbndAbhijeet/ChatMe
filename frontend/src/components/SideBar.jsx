@@ -1,7 +1,7 @@
 // Sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useHistory } from '../hooks/ChatHistory';
+import { useHistory } from '../hooks/GlobalChatHistory';
 import {MoreVertical} from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"

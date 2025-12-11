@@ -3,23 +3,26 @@ import {useParams, useNavigate, useLocation}  from "react-router-dom"
 import logo from "../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useHistory } from '../hooks/ChatHistory';
+import { useHistory } from '../hooks/GlobalChatHistory';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
 import Input from '../components/Input';
+import SelectedTools from '../components/SelectedTools';
+import { useTools } from '../hooks/GlobalTools';
 
 
 function ChatBot() {
   const [message, setMessage] = useState("");
-  const {isTyping, setIsTyping} = useHistory();
   const [displayedBotMessage, setDisplayedBotMessage] = useState("");
   
+  const {isTyping, setIsTyping} = useHistory();
+  const {selectedTools} = useTools();
 
   const messagesContainerRef = useRef(null);
 
   const {history, setHistory, processUserInput, createChat, historyLoading} = useHistory();
   const { id: chat_session} = useParams();//will be in string
-  const navigate = useNavigate();   
+  const navigate = useNavigate(); 
   // console.log(typeof(chat_session))
   // if (historyLoading) return <div>Loading...</div>;
   const currentChat = history.find(chat => String(chat.id) === chat_session);
@@ -87,7 +90,7 @@ function ChatBot() {
     try {
       let botResponse;
       try {
-        botResponse = await processUserInput(tempId, user_msg);
+        botResponse = await processUserInput(tempId, user_msg, selectedTools);
       } catch (error) {
         botResponse = null;
       }
