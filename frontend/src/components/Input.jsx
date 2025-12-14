@@ -13,6 +13,16 @@ const Input = (
     {message, setMessage, handleSubmit, isTyping}
 ) => {
     const [toolMenu, setToolMenu] = useState(false);
+    const [showModels, setShowModels] = useState(false);
+    const [selectedModel, setSelectedModel] = useState("ChatGpt");
+    const {setGlobalModel, selectedTools, setSelectedTools} = useTools();
+
+    useEffect(() => {
+      setGlobalModel(modelMeta[selectedModel].value);
+      console.log(modelMeta[selectedModel].value);
+    },[selectedModel]);
+
+
     const tools = {
       "🌐 Web Search": 1,
         "📎 Attach File": 2,
@@ -21,8 +31,45 @@ const Input = (
         "🎤 Voice Input": 5,
     }
 
-    const {selectedTools, setSelectedTools} = useTools();
-    
+    const modelMeta = {
+      ChatGpt: {
+        value: "openai/gpt-oss-20b:free",
+        logo: "/models/chatgpt.png",
+        desc: "Balanced reasoning, great for most tasks",
+        time: "3–5 sec"
+      },
+      DeepSeek: {
+        value: "tngtech/deepseek-r1t2-chimera:free",
+        logo: "/models/deepseek.png",
+        desc: "Fast & powerful reasoning",
+        time: "2–4 sec"
+      },
+      Mistral: {
+        value: "mistralai/devstral-2512:free",
+        logo: "/models/mistral.png",
+        desc: "Strong for knowledge tasks",
+        time: "2–3 sec"
+      },
+      Llamma: {
+        value: "meta-llama/llama-3.3-70b-instruct:free",
+        logo: "/models/meta.png",
+        desc: "Excellent for conversations",
+        time: "3–5 sec"
+      },
+      Gemini: {
+        value: "google/gemma-3-27b-it:free",
+        logo: "/models/gemini.png",
+        desc: "Great at multilingual + logic",
+        time: "2–3 sec"
+      },
+      Qwen: {
+        value: "qwen/qwen3-coder:free",
+        logo: "/models/qwen.png",
+        desc: "Best for coding tasks",
+        time: "1–2 sec"
+      }
+    };
+
 
     function handleTool(tool){
         // const val = tools[tool];
@@ -74,6 +121,65 @@ const Input = (
             className="flex-1 border border-[#618985]/50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#96BBBB]"
             disabled={isTyping}
           />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowModels(!showModels)}
+              className="flex items-center gap-2 rounded-lg border border-slate-300 
+                        bg-white/70 backdrop-blur-md px-3 py-2 shadow-sm hover:bg-gray-300"
+            >
+              <img src={modelMeta[selectedModel].logo} className="w-5 h-5 rounded" />
+              <span className="font-medium">{selectedModel}</span>
+              <span className="text-xs text-slate-500 ml-1">Smart</span>
+            </button>
+
+            {showModels && (
+              <div className="absolute bottom-12 left-0 w-72 rounded-xl border border-slate-200 
+                              bg-white/70 backdrop-blur-xl shadow-2xl p-3 
+                              animate-slideFade z-50">
+                {Object.entries(modelMeta).map(([name, info]) => {
+                  const active = selectedModel === name;
+
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => {
+                        setSelectedModel(name);
+                        setShowModels(false);
+                      }}
+                      className={`w-full flex items-center justify-between text-left 
+                                px-3 py-2 rounded-lg transition
+                                ${active ? "bg-slate-900 text-white" : "hover:bg-slate-100"}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img src={info.logo} className="w-6 h-6 rounded" />
+                        <div>
+                          <div className="font-medium">{name}</div>
+                          <div className="text-xs opacity-70">{info.desc}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full 
+                            bg-slate-200 text-slate-700">
+                          {info.time}
+                        </span>
+
+                        <span
+                          className={`h-4 w-4 rounded-full border 
+                          ${active ? "border-white bg-white" : "border-slate-400"}`}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+
+
+
           <button
             type="submit"
             disabled={!message.trim() || isTyping}

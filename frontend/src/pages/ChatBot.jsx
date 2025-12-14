@@ -16,7 +16,7 @@ function ChatBot() {
   const [displayedBotMessage, setDisplayedBotMessage] = useState("");
   
   const {isTyping, setIsTyping} = useHistory();
-  const {selectedTools} = useTools();
+  const {selectedTools, globalModel} = useTools();
 
   const messagesContainerRef = useRef(null);
 
@@ -90,7 +90,7 @@ function ChatBot() {
     try {
       let botResponse;
       try {
-        botResponse = await processUserInput(tempId, user_msg, selectedTools);
+        botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel);
       } catch (error) {
         botResponse = null;
       }
@@ -222,7 +222,7 @@ function ChatBot() {
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full h-screen flex overflow-hidden">
       {/* Fixed Header */}
       <div className="border-b border-[#618985]/30 p-4 shrink-0">
         <h1 className="text-2xl font-semibold text-[#414535] flex items-center">

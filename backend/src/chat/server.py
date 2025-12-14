@@ -53,9 +53,13 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+
+
+
 class MessageInput(BaseModel):
     message: str
     tools: list
+    model: str
 
 class MessageOutput(BaseModel):
     reply: str
@@ -91,7 +95,7 @@ async def create_new_chat(chat_id: int):
 
 @app.post("/api/save_response/{id}" , response_model=MessageOutput)
 async def process_save_responses(id: str, user_input: MessageInput):
-    # print(f"Received request: id={id}, message={user_input.message}")
+    # print(f"Received request: id={id}, message={user_input.message}"
     try:
         object_id = ObjectId(id)  # Convert string to ObjectId
     except Exception:
@@ -100,7 +104,7 @@ async def process_save_responses(id: str, user_input: MessageInput):
     is_new = await app.chatbot_dal.is_new_thread(object_id)
 
     result = get_ai_response(user_input.message, id, user_input.tools)
-    await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
+    await app.chatbot_dal.save_sender_response(object_id, "user", user_input.message, user_input.model)
     await app.chatbot_dal.save_sender_response(object_id, "bot", result)
 
     # Rewriting Title for new Chats

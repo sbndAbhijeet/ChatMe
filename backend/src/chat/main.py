@@ -4,26 +4,38 @@ from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.mongodb import MongoDBSaver
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from openai import OpenAI
 from src.web_search.search import clean_web_context
 import os
+from functools import lru_cache
+
 
 load_dotenv()
 
-os.environ["OPENAI_API_KEY"]= os.getenv("OPENAI_API_KEY")
 GRAPH_VERSION = "v1"   # change to v2, v3, v4 whenever your graph changes
 
+@lru_cache(maxsize=5)
+def get_llm(model_id):
+    print("Model ID: ", model_id)
+    return ChatOpenAI(
+        model=model_id,
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        base_url="https://openrouter.ai/api/v1",
+        max_retries=2,
+        timeout=30,
+    )
 
 DB_URI = os.getenv("MONOGB_URI")
-llm = init_chat_model("openai:gpt-4o-mini", max_retries=2, timeout=30)
+# llm = get_llm(config.GLOBAL_MODEL)
 
 COLLECTION_NAME = "luminchat_checkpointer"
 MAX_MESSAGES = 50
 
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    # base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1"
 )
 
 class State(TypedDict):
@@ -104,12 +116,14 @@ def route_tools(state: State) -> Literal['web_tool', 'chatbot']:
     return 'chatbot'
 
 # Bot Response
-def chatbot(state: State):
+def chatbot(state: State, config):
     """
     Invokes LLM with: messages + tool_results
     Appends AI response to messages.
     Clears tool_results after use.
     """
+    model_id = config["configurable"]['model']
+    llm = get_llm(model_id) # every time reinitialized (demerit)
     full_input = state['messages'] + state.get('tool_results',[])
     result = llm.invoke(full_input)
     return {
@@ -138,7 +152,7 @@ async def generate_title(user: str):
     """
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="openai/gpt-oss-20b:free",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user}
@@ -170,6 +184,8 @@ graph_builder.add_conditional_edges(
 graph_builder.add_edge("web_tool", "route_tools")  # loop back
 graph_builder.add_edge("chatbot", END)
 
+
+# Graph Compilation
 def create_checkpointer(checkpointer):
     return graph_builder.compile(checkpointer=checkpointer)
 
@@ -186,11 +202,12 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-def get_ai_response(user_input: str, doc_id: str, tools: list[str]):
+def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str):
     config = {
         "configurable": {
             "thread_id": doc_id,
             "graph_version": GRAPH_VERSION,
+            "model": model
         }
     }
 
