@@ -1,0 +1,84 @@
+from fastapi import APIRouter, FastAPI, HTTPException, status, WebSocket, Request
+from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from bson import ObjectId
+from pydantic import BaseModel
+
+from ..main import get_ai_response, generate_title
+import uvicorn
+
+from dotenv import load_dotenv
+from ..dal import ChatBot, HistorySummary
+
+router = APIRouter(prefix="/api/chat")
+
+
+
+class MessageInput(BaseModel):
+    message: str
+    tools: list
+    model: str
+
+class MessageOutput(BaseModel):
+    reply: str
+
+class RenameRequest(BaseModel):
+    title: str
+
+@router.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+# chatHistory data getting
+@router.get("/chat_history")
+async def get_chatbot_history(req: Request) -> list[HistorySummary]:
+    return  [item async for item in req.app.state.chatbot_dal.get_chat_history()]
+
+class ChatModel(BaseModel):
+    id: str
+    messages: list
+
+@router.get("/chat_session/{doc_id}")
+async def get_current_chat(doc_id: str, req: Request):
+    chat = await req.app.state.chatbot_dal.get_current_chat(doc_id)
+    return {"id": str(chat["_id"]), "messages": chat["messages"]}
+
+@router.post("/chatbot/lists/{chat_id}", status_code=status.HTTP_201_CREATED)
+async def create_new_chat(chat_id: int, req: Request):
+    return {
+        "id": await req.app.state.chatbot_dal.create_new_chat(chat_id),
+        "title": f"New Chat - {chat_id}"
+    }
+
+
+@router.post("/save_response/{id}" , response_model=MessageOutput)
+async def process_save_responses(id: str, user_input: MessageInput, req: Request):
+    # print(f"Received request: id={id}, message={user_input.message}"
+    try:
+        object_id = ObjectId(id)  # Convert string to ObjectId
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    is_new = await req.app.state.chatbot_dal.is_new_thread(object_id)
+
+    result = get_ai_response(user_input.message, id, user_input.tools, user_input.model)
+    await req.app.state.chatbot_dal.save_sender_response(object_id, "user", user_input.message)
+    await req.app.state.chatbot_dal.save_sender_response(object_id, "bot", result)
+
+    # Rewriting Title for new Chats
+    # print(is_new)
+    if is_new:
+        new_title = await generate_title(user_input.message)
+        print("new title: ",new_title)
+        await req.app.state.chatbot_dal.rename_chat_title(id, new_title)
+        
+    return {"reply": result}
+
+@router.delete("/delete_chat/{doc_id}")
+async def delete_chat(doc_id: str, req: Request) -> bool:
+    return await req.app.state.chatbot_dal.delete_chat(doc_id)
+
+@router.patch("/chat_rename/{doc_id}")
+async def rename_chat_title(doc_id: str, request: RenameRequest, req: Request):
+    return await req.app.state.chatbot_dal.rename_chat_title(doc_id, request.title)

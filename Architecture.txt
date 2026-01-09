@@ -1,0 +1,16 @@
+backend/
+  src/
+    chat/
+      dal.py
+      router.py   ← API endpoints for chat
+      service.py  ← optional business logic
+    notes/
+      dal.py
+      router.py   ← API endpoints for notes
+      service.py
+    core/
+      db.py       ← create client + db here
+    server.py     ← create FastAPI + include routers
+
+
+but a save button so that it sends api and updates them

@@ -4,7 +4,7 @@ from pymongo import ReturnDocument
 from pydantic import BaseModel
 from uuid import uuid4
 
-
+# Need to change the motor to pymongo (Will be deprecated soon)
 
 class HistorySummary(BaseModel):# deatiled history of each chat
     id: str
@@ -80,7 +80,7 @@ class ChatBot:
         return str(response.inserted_id)
     
     async def get_chat_history(self, session=None):
-        cursor = self._chatbot_collection.aggregate(
+        cursor = await self._chatbot_collection.aggregate(
             [
                 {
                     "$project":{

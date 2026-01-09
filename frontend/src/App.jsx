@@ -5,6 +5,7 @@ import Other from "./pages/Other";
 import Layout from "./components/Layout"
 import Starter from "./pages/Starter";
 import NewChatRedirect from "./components/NewChatRedirect";
+import NoteTaking from "./pages/NoteTaking";
 
 const App = () => {
 
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/" element={<Starter />}/>
           <Route path="/chatbot" element={<NewChatRedirect/>}/>
           <Route path="/chatbot/:id" element={<ChatBot/>}/>
+          <Route path="/note_taking/" element={<NoteTaking/>}/>
           <Route path="/other" element={<Other />}/>
         </Route>
       </Routes>
