@@ -8,19 +8,21 @@ const Layout = () => {
   const location = useLocation();
   // const parm = useParams();
   // console.log(parm) // {id: '1'}
-  const match = useMatch("/chatbot/:id");
-  const isChatbotPage = Boolean(match);
+  const chat_match = Boolean(useMatch("/chatbot/:id"));
+  const blog_match = Boolean(useMatch("/blogs"));
+  const note_match = Boolean(useMatch("/blogs/:id/note/:id"));
+  const Page = blog_match || chat_match || note_match;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2E3BC]/10">
-      {!isChatbotPage && <Header />}
+      {!Page && <Header />}
       
       {/* Main content area with full-height sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - only shown on /chatbot and extends to bottom */}
-        {isChatbotPage && (
+        {Page && (
           <div className="shrink-0 bg-[#414535]">
-            <Sidebar />
+            <Sidebar chatPage={chat_match} blogPage={blog_match} notePage={note_match}/>
           </div>
         )}
         
@@ -29,7 +31,7 @@ const Layout = () => {
           <Outlet />
           
           {/* Footer - only shown outside /chatbot */}
-          {!isChatbotPage && <Footer />}
+          {!Page && <Footer />}
         </main>
       </div>
     </div>

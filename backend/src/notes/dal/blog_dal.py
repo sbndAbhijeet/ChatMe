@@ -6,46 +6,20 @@ from pydantic import BaseModel
 from uuid import uuid4
 from datetime import datetime
 
-# Database models
-
-    
-class Collection(BaseModel):
-    name: str
-    created_at: datetime
-
-
-class ListCollections(BaseModel):
-    name: str
-    created_at: datetime
-
-    @staticmethod
-    def from_doc(doc) -> "ListCollections":
-        return ListCollections(
-            name=doc['name'],
-            created_at=doc['created_at']
-        )
-    
-class RequestStatus(BaseModel):
-    timestamp: datetime
-    status: bool #False -> fail
-    message: Optional[str] = None
-
-class CreatedCollection(BaseModel):
-    collection_id: str
-    status: bool
+from src.notes.schemas.blogs import ListCollections, CreatedCollection
+from src.notes.schemas.service import RequestStatus
 
 
 class BlogDAL:
     def __init__(self, blog_collection: AsyncMongoClient):
         self._blog_collection = blog_collection
 
-    # Collections
     # create
-    async def create_collection(self, name: str, session=None):
+    async def create_collection(self, blog_name: str, session=None):
         try:
             res = await self._blog_collection.insert_one(
                 {
-                    "name": name,
+                    "name": blog_name,
                     "created_at": datetime.now(),
                 },session=session
             )
@@ -55,14 +29,14 @@ class BlogDAL:
             print("Something went wrong")
             return RequestStatus(timestamp=datetime.now(), status=False, message=str(e))
     
-    # get a single collection
+    '''# get a single collection
     # async def get_collection(self, id: str,session=None):
     #     res = await self._blog_collection.find_one(
     #         {"_id": ObjectId(id)},
     #         session=session
     #     )
 
-    #     return res
+    #     return res'''
 
     # collection existance
     async def collection_exists(self, collection_id: ObjectId, session=None) -> bool:

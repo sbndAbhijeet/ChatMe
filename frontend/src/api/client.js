@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-    baseURL: "http://localhost:8000",
+    baseURL: "http://localhost:8000/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -12,7 +12,7 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        console.log("API error: ", error);
+        // console.log("API error: ", error);
         return Promise.reject(error);
     }
 )

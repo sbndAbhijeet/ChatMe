@@ -2,12 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useHistory } from '../hooks/GlobalChatHistory';
-import {MoreVertical} from "lucide-react";
+import {MoreVertical, Plus} from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"
 
 
-const Sidebar = () => {
+const Sidebar = (
+  {
+    chatPage,
+    blogPage,
+    notePage
+  }
+) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const {id} = useParams();
@@ -15,6 +21,7 @@ const Sidebar = () => {
   const [showMenu, setShowMenu] = useState({menu: false, key: ""});
   const [rename, setRename] = useState({id: -1, rename: false})
   const [selectedId, setSelectedId] = useState(null);
+  const [addBlog, setAddBlog] = useState(false);
 
   const navItems = [
     { path: '/', icon: '💬', label: 'New Chat', end: true },
@@ -74,6 +81,41 @@ const Sidebar = () => {
   }
 
 
+  const [expandedBlogs, setExpandedBlogs] = React.useState({});
+  const blogs = [
+    {
+      id: "blog-1",
+      title: "Understanding Neural Networks",
+      notes: [
+        "Intro to neurons and layers",
+        "Backpropagation basics",
+        "Common activation functions"
+      ]
+    },
+    {
+      id: "blog-2",
+      title: "Exploring Reinforcement Learning",
+      notes: [
+        "What is an agent?",
+        "The concept of rewards and policies",
+        "Q-learning overview"
+      ]
+    },
+    {
+      id: "blog-3",
+      title: "Data Preprocessing Tips",
+      notes: [
+        "Handling missing values",
+        "Feature scaling techniques",
+        "Encoding categorical data"
+      ]
+    }
+  ];
+
+  const addNewBlog = () => {
+    setAddBlog(!addBlog)
+  };
+
   return (
     <div className={`flex flex-col h-full bg-[#414535] text-[#F2E3BC] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Collapse Button */}
@@ -93,11 +135,18 @@ const Sidebar = () => {
         <span className="p-3 text-xl">{'💬'}</span>
         {!isCollapsed && <span className="ml-2">New Chat</span>}
       </Link>
+      <Link
+          to="/blogs"
+          className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === '/' ? 'bg-[#618985]/50' : ''}`}
+      >
+          <span className="p-3 text-xl">{'📝'}</span>
+        {!isCollapsed && <span className="ml-2">Blogs</span>}
+      </Link>
 
       {/* Recent Chats Section */}
-      {!isCollapsed && (
+      {!isCollapsed && chatPage && (
         <div className="px-3 mb-4">
-          <h3 className="text-xs uppercase font-semibold text-[#C19875] mb-2 px-2">Recent Chats</h3>
+          <h3 className="text-md uppercase font-semibold text-[#C19875] mb-2 px-2">Recent Chats</h3>
           <div className="space-y-1">
             { history.filter(chat => chat && chat.id).slice().reverse().map(chat => (
               <Link
@@ -163,6 +212,57 @@ const Sidebar = () => {
           </div>
         </div>
       )}
+
+      {/* Recent Blogs Section */}
+      {!isCollapsed && (blogPage || notePage) && (
+        <div className="px-3 mb-4">
+        <h3 className="text-md uppercase font-semibold text-[#C19875] mb-2 px-2">
+          Recent Blogs
+          <button>
+            +
+          </button>
+        </h3>
+        <div className="space-y-1">
+          {blogs.map(blog => (
+            <div key={blog.id} className="mb-1">
+              <div
+                onClick={() =>
+                  setExpandedBlogs(prev => ({
+                    ...prev,
+                    [blog.id]: !prev[blog.id]
+                  }))
+                }
+                className="block cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30 flex justify-between items-center"
+              >
+                {blog.title}
+                <span className="text-xs">
+                  {expandedBlogs[blog.id] ? '▲' : '▼'}
+                </span>
+              </div>
+
+              {expandedBlogs[blog.id] && (
+                <div className="ml-4 pl-2 border-l border-gray-300">
+                  {blog.notes.map((note, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/blogs/${blog.id}/note/${idx}`}
+                    >
+                      <div
+                        key={idx}
+                        className="block cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30"
+                      >
+                        {note}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      )}
+
 
       {/* Navigation Links */}
       <div className="mt-auto mb-4">

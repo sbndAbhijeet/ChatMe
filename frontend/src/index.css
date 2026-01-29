@@ -1,3 +1,4 @@
+
 @import "tailwindcss";
 
 /* In your CSS file */
@@ -33,3 +34,17 @@
 .animate-slideFade {
   animation: slideFade 0.15s ease-out forwards;
 }
+
+
+/* For progress bar */
+@keyframes slide-in {
+   from { transform: translateY(-20px); opacity: 0; }
+   to { transform: translateY(0); opacity: 1; }
+ }
+ .animate-slide-in { animation: slide-in 0.3s ease-out; }
+ 
+@keyframes progress {
+  from { width: 100%; }
+   to { width: 0%; }
+ }
+ .animate-progress { animation: progress 3s linear forwards; }

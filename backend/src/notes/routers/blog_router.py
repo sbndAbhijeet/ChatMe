@@ -2,42 +2,43 @@ from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from src.notes.dal.blog_dal import BlogDAL, ListCollections
 from src.notes.dal.service import CollectionService
+from src.notes.schemas.blogs import BlogName, BlogNote, RenameCollectionRequest
 
 from typing import Optional
 import datetime
 
 router = APIRouter(prefix="/api/blog")
 
-class BlogModel(BaseModel):
-    title: str
-
-class NoteIn(BaseModel):
-    title: str
-    content: str
 
 @router.post('/')
-async def create_collection(name: str, request: Request):
+async def create_collection(blog: BlogName, request: Request):
     blog_dal = request.app.state.blog_dal
-    return await blog_dal.create_collection(name)
+    return await blog_dal.create_collection(blog.blog_name)
 
 @router.post('/blog_note/')
-async def create_collection_and_note(collection_name: str, note: NoteIn, request: Request):
+async def create_collection_and_note(data: BlogNote, request: Request):
     collection_service = request.app.state.collection_service
-    return await collection_service.create_collection_and_note(collection_name, note)
+    return await collection_service.create_collection_and_note(data.blog_name, data.note)
 
 @router.get('/')
-async def get_collections(request: Request) -> list[ListCollections]:
+async def get_collections(request: Request):
     blog_dal = request.app.state.blog_dal
     collections = []
     async for collection in blog_dal.list_collections():
         collections.append(collection)
     
-    return collections
+    return {
+        "blogs": collections
+    }
 
 @router.patch('/{collection_id}')
-async def rename_collection(collection_id: str, new_name: str, request: Request):
+async def rename_collection(
+    collection_id: str,
+    payload: RenameCollectionRequest,
+    request: Request
+    ):
     blog_dal = request.app.state.blog_dal
-    return await blog_dal.rename_collection(collection_id, new_name)
+    return await blog_dal.rename_collection(collection_id, payload.blog_name)
 
 @router.delete('/{collection_id}')
 async def delete_collection(collection_id: str, request: Request):

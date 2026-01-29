@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.jsx'
 import { ChatHistoryProvider } from './hooks/GlobalChatHistory.jsx'
 import { GlobalToolsProvider } from './hooks/GlobalTools.jsx'
+import { GlobalBlogProvider } from './hooks/GlobalBlog.jsx'
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
     <ChatHistoryProvider>
       <GlobalToolsProvider>
-        <App />
+        <GlobalBlogProvider>
+          <App />
+        </GlobalBlogProvider>
       </GlobalToolsProvider>
     </ChatHistoryProvider>
   // </StrictMode>,

@@ -14,3 +14,7 @@ backend/
 
 
 but a save button so that it sends api and updates them
+
+
+Furthere ideas:
+1. Should can easily change a note from one blog to another

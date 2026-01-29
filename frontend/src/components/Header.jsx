@@ -32,6 +32,12 @@ const Header = () => {
             >
                 Other
             </Link>
+            <Link
+                to="/blogs"
+                className="px-4 py-2 text-[#F2E3BC] hover:text-white rounded-lg transition-colors duration-200 hover:bg-[#96BBBB]/30 font-medium"
+            >
+                Blogs
+            </Link>
             </nav>
         </div>
         </header>

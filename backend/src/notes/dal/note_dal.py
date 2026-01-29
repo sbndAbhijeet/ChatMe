@@ -6,53 +6,11 @@ from pydantic import BaseModel, ConfigDict
 from uuid import uuid4
 from datetime import datetime
 
+from src.notes.schemas.notes import NoteIn, ListNotes, CreatedNote, Note
+from src.notes.schemas.service import RequestStatus
+
 # Aim to reply in json only
-
-class Note(BaseModel):
-    title: str
-    content: str
-    created_at: datetime
-    updated_at: datetime
-    collection_id: str
-
-    @staticmethod
-    def note_doc(doc) -> "Note":
-        return Note(
-            title = doc['title'],
-            content = doc['content'],
-            created_at = doc['created_at'],
-            updated_at = doc['updated_at'],
-            collection_id = str(doc['collection_id'])
-        )
-
-
 # document returns
-class NoteIn(BaseModel):
-    title: str
-    content: str
-
-
-class ListNotes(BaseModel):
-    note_id: str
-    title: str
-    # content: str
-
-    @staticmethod
-    def list_doc(doc) -> "ListNotes":
-        return ListNotes(
-            note_id=str(doc['_id']),
-            title = doc['title']
-            # content=doc['content']
-        )
-    
-class RequestStatus(BaseModel):
-    timestamp: datetime
-    status: bool #False -> fail
-    message: Optional[str] = None
-
-class CreatedNote(BaseModel):
-    note_id: str
-    status: bool
 
 class NoteDAL:
     def __init__(self, note_collection: AsyncMongoClient):
@@ -141,7 +99,6 @@ class NoteDAL:
             )
         except Exception as e:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
-        
     
     # need to update
     async def update_note_content(
@@ -177,7 +134,6 @@ class NoteDAL:
         except Exception as e:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
         
-
     # delete a note
     async def delete_note(
         self,
@@ -194,18 +150,18 @@ class NoteDAL:
         except Exception as e:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
     
-    # delete notes by collection
-    async def delete_notes_by_collection(
-        self,
-        collection_id: str,
-        session=None
-    ) -> "RequestStatus":
-        try:
-            res = await self._note_collection.delete_many(
-                {'collection_id': ObjectId(collection_id)},
-                session=session
-            )
+    # # delete notes by collection
+    # async def delete_notes_by_collection(
+    #     self,
+    #     collection_id: str,
+    #     session=None
+    # ) -> "RequestStatus":
+    #     try:
+    #         res = await self._note_collection.delete_many(
+    #             {'collection_id': ObjectId(collection_id)},
+    #             session=session
+    #         )
 
-            return RequestStatus(timestamp= datetime.now(), status=True) 
-        except Exception as e:
-            return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
+    #         return RequestStatus(timestamp= datetime.now(), status=True) 
+    #     except Exception as e:
+    #         return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))

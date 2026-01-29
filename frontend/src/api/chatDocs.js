@@ -1,8 +1,9 @@
-import apiClient from "./client";
+import apiClient from "./client.js";
 
 export async function getHistory () {
     try{
-        const res = await apiClient.get("/api/chat/chat_history");
+        const res = await apiClient.get("/chat/chat_history");
+        console.log(res.data)
         return {data: res.data, error: null};
     } catch(error){
         return {data: null, error: error};
@@ -12,7 +13,7 @@ export async function getHistory () {
 
 export async function getOngoingChat (docId) {
     try {
-        const res = await apiClient.get(`/api/chat/chat_session/${docId}`);
+        const res = await apiClient.get(`/chat/chat_session/${docId}`);
         return {data: res.data, error: null}
     } catch (error) {
         return {data: null, error: error}
@@ -21,7 +22,7 @@ export async function getOngoingChat (docId) {
 
 export async function create_new_chat(chat_id){
     try {
-        const res = await apiClient.post(`/api/chat/chatbot/lists/${chat_id}`)
+        const res = await apiClient.post(`/chat/chatbot/lists/${chat_id}`)
         return {data: res.data, error: null}
     } catch(error){
         return {data: null, error: error};
@@ -30,7 +31,7 @@ export async function create_new_chat(chat_id){
 
 export async function postMessage (docId, msg, tools, model) {
     try {
-        const res = await apiClient.post(`/api/chat/save_response/${String(docId)}`, {message: msg, tools: tools, model: model})
+        const res = await apiClient.post(`/chat/save_response/${String(docId)}`, {message: msg, tools: tools, model: model})
         console.log(res.data);
         return {data: res.data, error: null};
     } catch (error){
@@ -40,7 +41,7 @@ export async function postMessage (docId, msg, tools, model) {
 
 export const renameTitle = async (docId,title) => {
     try {
-        const res = await apiClient.patch(`/api/chat/chat_rename/${docId}`, {title})
+        const res = await apiClient.patch(`/chat/chat_rename/${docId}`, {title})
         return {data: res.data, error: null};
     } catch (error){
         return {data: null, error: error}
@@ -49,12 +50,14 @@ export const renameTitle = async (docId,title) => {
 
 export const deleteChat = async (docId) => {
     try {
-        const res = await apiClient.delete(`/api/chat/delete_chat/${docId}`)
+        const res = await apiClient.delete(`/chat/delete_chat/${docId}`)
         return {data: res.data, error: null}
     } catch (error){
         return {data: null, error: error}
     }
 }
+
+getHistory();
 
 /* 
 getHistory:

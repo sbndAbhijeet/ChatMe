@@ -7,22 +7,10 @@ from uuid import uuid4
 from datetime import datetime
 from src.notes.dal.blog_dal import BlogDAL
 from src.notes.dal.note_dal import NoteDAL
+from src.notes.schemas.notes import NoteIn
+from src.notes.schemas.service import RequestStatus
+from src.notes.schemas.blogs import BlogNote, CreateCollectionNoteResponse
 
-
-# document returns
-class NoteIn(BaseModel):
-    title: str
-    content: str
-
-class RequestStatus(BaseModel):
-    timestamp: datetime
-    status: bool #False -> fail
-    message: Optional[str] = None
-
-class CreateCollectionNoteResponse(BaseModel):
-    collection_id: str
-    note_id: str
-    status: bool
 
 class CollectionService:
     def __init__(self, blog_dal: BlogDAL, note_dal: NoteDAL, client):
@@ -30,6 +18,7 @@ class CollectionService:
         self._note_dal = note_dal
         self.client = client
 
+    # Create blog along with note
     async def create_collection_and_note(
         self,
         collection_name: str,
@@ -38,7 +27,7 @@ class CollectionService:
     ):
         try:
             collection_res = await self._blog_dal.create_collection(
-                name=collection_name,
+                blog_name=collection_name,
                 session=session
             )
 
@@ -58,6 +47,7 @@ class CollectionService:
         except Exception as e:
             return RequestStatus(timestamp=datetime.now(), status=False, message=str(e))
             
+    # Delete Collection along with related notes
     async def delete_collection(
         self,
         collection_id: str,
