@@ -23,13 +23,7 @@ async def create_collection_and_note(data: BlogNote, request: Request):
 @router.get('/')
 async def get_collections(request: Request):
     blog_dal = request.app.state.blog_dal
-    collections = []
-    async for collection in blog_dal.list_collections():
-        collections.append(collection)
-    
-    return {
-        "blogs": collections
-    }
+    return await blog_dal.list_collections()
 
 @router.patch('/{collection_id}')
 async def rename_collection(

@@ -3,7 +3,7 @@ import apiClient from "./client.js";
 export async function getHistory () {
     try{
         const res = await apiClient.get("/chat/chat_history");
-        console.log(res.data)
+        // console.log(res.data)
         return {data: res.data, error: null};
     } catch(error){
         return {data: null, error: error};

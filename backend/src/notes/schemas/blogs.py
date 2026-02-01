@@ -27,13 +27,15 @@ class RenameCollectionRequest(BaseModel):
     blog_name: str
 
 class ListCollections(BaseModel):
-    name: str
+    blog_id: str
+    blog_name: str
     created_at: datetime
 
     @staticmethod
     def from_doc(doc) -> "ListCollections":
         return ListCollections(
-            name=doc['name'],
+            blog_id=str(doc['_id']),
+            blog_name=doc['name'],
             created_at=doc['created_at']
         )
     

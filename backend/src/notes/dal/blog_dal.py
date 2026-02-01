@@ -48,8 +48,11 @@ class BlogDAL:
     
     # get all collections
     async def list_collections(self, session=None):
+        blogs = []
         async for doc in self._blog_collection.find({}):
-            yield ListCollections.from_doc(doc)
+            blogs.append(ListCollections.from_doc(doc))
+        
+        return blogs
     
     # update
     async def rename_collection(self, id: str, name: str, session=None) -> RequestStatus:

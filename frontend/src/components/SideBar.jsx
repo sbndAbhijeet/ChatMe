@@ -6,6 +6,9 @@ import {MoreVertical, Plus} from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"
 
+import { useBlog } from '../hooks/BlogContext';
+import { useNotes } from '../hooks/NoteContext';
+
 
 const Sidebar = (
   {
@@ -81,40 +84,9 @@ const Sidebar = (
   }
 
 
-  const [expandedBlogs, setExpandedBlogs] = React.useState({});
-  const blogs = [
-    {
-      id: "blog-1",
-      title: "Understanding Neural Networks",
-      notes: [
-        "Intro to neurons and layers",
-        "Backpropagation basics",
-        "Common activation functions"
-      ]
-    },
-    {
-      id: "blog-2",
-      title: "Exploring Reinforcement Learning",
-      notes: [
-        "What is an agent?",
-        "The concept of rewards and policies",
-        "Q-learning overview"
-      ]
-    },
-    {
-      id: "blog-3",
-      title: "Data Preprocessing Tips",
-      notes: [
-        "Handling missing values",
-        "Feature scaling techniques",
-        "Encoding categorical data"
-      ]
-    }
-  ];
-
-  const addNewBlog = () => {
-    setAddBlog(!addBlog)
-  };
+  const [expandedBlogs, setExpandedBlogs] = useState({});
+  const {blogs} = useBlog();
+  const {notes} = useNotes()
 
   return (
     <div className={`flex flex-col h-full bg-[#414535] text-[#F2E3BC] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -218,47 +190,49 @@ const Sidebar = (
         <div className="px-3 mb-4">
         <h3 className="text-md uppercase font-semibold text-[#C19875] mb-2 px-2">
           Recent Blogs
-          <button>
-            +
-          </button>
         </h3>
         <div className="space-y-1">
-          {blogs.map(blog => (
-            <div key={blog.id} className="mb-1">
+          {blogs.map(blog => {
+          
+            const blogNotes = notes.filter(
+            n => String(n.blog_id) === String(blog.blog_id)
+          );
+            return (
+            <div key={blog.blog_id} className="mb-1">
               <div
                 onClick={() =>
                   setExpandedBlogs(prev => ({
                     ...prev,
-                    [blog.id]: !prev[blog.id]
+                    [blog.blog_id]: !prev[blog.blog_id]
                   }))
                 }
                 className="block cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30 flex justify-between items-center"
               >
-                {blog.title}
+                {blog.blog_name}
                 <span className="text-xs">
-                  {expandedBlogs[blog.id] ? '▲' : '▼'}
+                  {expandedBlogs[blog.blog_id] ? '▲' : '▼'}
                 </span>
               </div>
 
-              {expandedBlogs[blog.id] && (
+              {expandedBlogs[blog.blog_id] && (
                 <div className="ml-4 pl-2 border-l border-gray-300">
-                  {blog.notes.map((note, idx) => (
+                  {blogNotes.map(note => (
                     <Link
-                      key={idx}
-                      to={`/blogs/${blog.id}/note/${idx}`}
+                      key={note.note_id}
+                      to={`/blogs/${blog.blog_id}/note/${note.note_id}`}
                     >
                       <div
-                        key={idx}
+                        key={note.note_id}
                         className="block cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30"
                       >
-                        {note}
+                        {note.title}
                       </div>
                     </Link>
                   ))}
                 </div>
               )}
             </div>
-          ))}
+          )})}
         </div>
       </div>
       )}

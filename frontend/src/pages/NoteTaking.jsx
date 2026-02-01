@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import { useBlog } from "../hooks/BlogContext";
+
 const blogs = [
   {
     id: "blog-1",

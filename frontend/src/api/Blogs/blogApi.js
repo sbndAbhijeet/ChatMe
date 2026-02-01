@@ -52,7 +52,7 @@ export async function createBlogNote(data){
         if(status == true)
             return {
                 'status': res.data.status,
-                'collection_id': res.data.collection_id,
+                'blog_id': res.data.collection_id,
                 'note_id': res.data.note_id,
             }
         else

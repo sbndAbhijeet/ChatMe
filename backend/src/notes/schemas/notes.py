@@ -48,6 +48,7 @@ class Note(BaseModel):
 
 class ListNotes(BaseModel):
     note_id: str
+    blog_id: str
     title: str
     # content: str
 
@@ -55,6 +56,7 @@ class ListNotes(BaseModel):
     def list_doc(doc) -> "ListNotes":
         return ListNotes(
             note_id=str(doc['_id']),
-            title = doc['title']
+            blog_id=str(doc['collection_id']),
+            title = doc['title'],
             # content=doc['content']
         )
