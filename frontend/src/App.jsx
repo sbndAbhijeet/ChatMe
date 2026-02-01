@@ -7,6 +7,8 @@ import Starter from "./pages/Starter";
 import NewChatRedirect from "./components/NewChatRedirect";
 import NoteTaking from "./pages/NoteTaking";
 import Blogs from "./pages/Blogs";
+import CreateBlog from "./pages/CreateBlog";
+import CreateNote from "./pages/CreateNote";
 
 const App = () => {
 
@@ -19,6 +21,8 @@ const App = () => {
           <Route path="/chatbot/:id" element={<ChatBot/>}/>
           <Route path="/blogs" element={<Blogs/>}/>
           <Route path="/blogs/:blogId/note/:noteId" element={<NoteTaking/>}/>
+          <Route path="/create-blog" element={<CreateBlog />}/>
+          <Route path="/create-note" element={<CreateNote />}/>
           <Route path="/other" element={<Other />}/>
         </Route>
       </Routes>

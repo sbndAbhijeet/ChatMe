@@ -1,38 +1,39 @@
 import React from "react";
-import { Outlet, useLocation, useMatch, useParams } from "react-router-dom";
+import { Outlet, useLocation, matchPath } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import Sidebar from "./SideBar";
+import { layoutRoutes } from "../config/layoutRoutes";
 
 const Layout = () => {
   const location = useLocation();
-  // const parm = useParams();
-  // console.log(parm) // {id: '1'}
-  const chat_match = Boolean(useMatch("/chatbot/:id"));
-  const blog_match = Boolean(useMatch("/blogs"));
-  const note_match = Boolean(useMatch("/blogs/:id/note/:id"));
-  const Page = blog_match || chat_match || note_match;
+
+  const matchedRoute = layoutRoutes.find(r =>
+    matchPath({ path: r.pattern, end: false }, location.pathname)
+  );
+
+  const showSidebar = matchedRoute?.sidebar;
+  const showHeader = matchedRoute ? matchedRoute.header : true;
+  const showFooter = matchedRoute ? matchedRoute.footer : true;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2E3BC]/10">
-      {!Page && <Header />}
-      
-      {/* Main content area with full-height sidebar */}
+
+      {showHeader && <Header />}
+
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - only shown on /chatbot and extends to bottom */}
-        {Page && (
+
+        {showSidebar && (
           <div className="shrink-0 bg-[#414535]">
-            <Sidebar chatPage={chat_match} blogPage={blog_match} notePage={note_match}/>
+            <Sidebar type={matchedRoute?.type} />
           </div>
         )}
-        
-        {/* Main content area with scrollable content */}
+
         <main className="flex-1 flex flex-col overflow-auto">
           <Outlet />
-          
-          {/* Footer - only shown outside /chatbot */}
-          {!Page && <Footer />}
+          {showFooter && <Footer />}
         </main>
+
       </div>
     </div>
   );

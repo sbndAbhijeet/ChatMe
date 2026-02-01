@@ -11,12 +11,14 @@ import { useNotes } from '../hooks/NoteContext';
 
 
 const Sidebar = (
-  {
-    chatPage,
-    blogPage,
-    notePage
-  }
+  {type}
 ) => {
+  const chatPage = type === "chat";
+  const blogPage = type === "blog";
+  const notePage = type === "note";
+
+
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const {id} = useParams();
