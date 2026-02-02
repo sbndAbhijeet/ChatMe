@@ -1,14 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import {useParams, useNavigate, useLocation}  from "react-router-dom"
-import logo from "../assets/non-bg-logo.png";
+import logo from "../../assets/non-bg-logo.png";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useHistory } from '../hooks/GlobalChatHistory';
+import { useHistory } from '../../hooks/GlobalChatHistory';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
-import Input from '../components/Input';
-import SelectedTools from '../components/SelectedTools';
-import { useTools } from '../hooks/GlobalTools';
+import Input from '../../components/Input';
+import SelectedTools from '../../components/SelectedTools';
+import { useTools } from '../../hooks/GlobalTools';
 
 
 function ChatBot() {

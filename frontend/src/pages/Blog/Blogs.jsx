@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import PlusButton from "../components/PlusButton";
+import PlusButton from "../../components/PlusButton";
 
-import { useBlog } from "../hooks/BlogContext";
-import { useNotes } from "../hooks/NoteContext";
+import { useBlog } from "../../hooks/BlogContext";
+import { useNotes } from "../../hooks/NoteContext";
 
 // Random timestamp (last 7 days)
 const randomTime = () => {

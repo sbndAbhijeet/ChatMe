@@ -15,7 +15,7 @@ export const ErrorProvider = ({ children }) => {
     }
 
     return (
-        <ErrorContext.Provider value={{ error, setError }}>
+        <ErrorContext.Provider value={{ error, setError, showError }}>
             {children}
             {error && <ErrorPopup message={error}/>}
         </ErrorContext.Provider>

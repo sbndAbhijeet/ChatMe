@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { useBlog } from "../hooks/BlogContext";
+import { useBlog } from "../../hooks/BlogContext";
 
 const blogs = [
   {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useBlog } from "../hooks/BlogContext";
+import { useBlog } from "../../hooks/BlogContext";
 
 function CreateBlog() {
   const navigate = useNavigate();

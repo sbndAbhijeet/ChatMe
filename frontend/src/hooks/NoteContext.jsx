@@ -68,18 +68,18 @@ export const NoteProvider = ({children}) => {
         setNotes((prev) => prev.map(note => note.note_id === noteId ? {...note, title} : note));
     }
 
-    const updateContent = async (noteId, content) => {
-        const res = await notesApi.updateNoteContent(noteId, content);
+    // const updateContent = async (noteId, content) => {
+    //     const res = await notesApi.updateNoteContent(noteId, content);
 
-        if (!res.status) {
-            showError(res.error);
-            return;
-        }
+    //     if (!res.status) {
+    //         showError(res.error);
+    //         return;
+    //     }
 
-        setNotes((prev) => prev.map(
-          (n) => noteId === n.noteId ? {...n, content} : n
-        ))
-    }
+    //     setNotes((prev) => prev.map(
+    //       (n) => noteId === n.noteId ? {...n, content} : n
+    //     ))
+    // }
 
     const deleteNote = async (noteId) => {
         const res = await notesApi.deleteNote(noteId)
@@ -103,7 +103,7 @@ export const NoteProvider = ({children}) => {
             loadNotes,
             createNote,
             updateTitle,
-            updateContent,
+            // updateContent,
             deleteNote,
         }}
         >
@@ -119,3 +119,9 @@ export const useNotes = () => {
         throw new Error("useNotes must be used inside NotesProvider")
     return ctx;
 }
+
+
+/*
+Note:
+For getNotes and UpdateContent we are not making an global context as we are not going to use them in multiple pages as view management.
+*/

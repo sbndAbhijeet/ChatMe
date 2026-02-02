@@ -3,7 +3,7 @@ import { Outlet, useLocation, matchPath } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import Sidebar from "./SideBar";
-import { layoutRoutes } from "../config/layoutRoutes";
+import { layoutRoutes } from "../../config/layoutRoutes";
 
 const Layout = () => {
   const location = useLocation();

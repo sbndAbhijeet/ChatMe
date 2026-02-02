@@ -1,13 +1,13 @@
 // Sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useHistory } from '../hooks/GlobalChatHistory';
+import { useHistory } from '../../hooks/GlobalChatHistory';
 import {MoreVertical, Plus} from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"
 
-import { useBlog } from '../hooks/BlogContext';
-import { useNotes } from '../hooks/NoteContext';
+import { useBlog } from '../../hooks/BlogContext';
+import { useNotes } from '../../hooks/NoteContext';
 
 
 const Sidebar = (
