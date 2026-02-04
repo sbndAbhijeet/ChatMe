@@ -33,20 +33,21 @@ async def get_notes(collection_id: str, request: Request):
     # the note of the type title, content
 
 
-@router.patch('/title/{note_id}') # rename_title in payload
-async def update_note_title(note_id: str, data: NoteTitle, request: Request):
-    note_dal = request.app.state.note_dal
-    return await note_dal.update_note_title(note_id, data.title)
+# @router.patch('/title/{note_id}') # rename_title in payload
+# async def update_note_title(note_id: str, data: NoteTitle, request: Request):
+#     note_dal = request.app.state.note_dal
+#     return await note_dal.update_note_title(note_id, data.title)
 
 
-@router.patch('/content/{note_id}')
-async def update_note_content(
+@router.patch('/{note_id}')
+async def update_note(
     note_id: str,
-    data: NoteContent,
+    data: NoteModel,
     request: Request
 ):
+    print(data)
     note_dal = request.app.state.note_dal
-    return await note_dal.update_note_content(note_id, data.content)
+    return await note_dal.update_note(note_id, data)
     
 
 @router.delete('/{note_id}')

@@ -50,6 +50,7 @@ class ListNotes(BaseModel):
     note_id: str
     blog_id: str
     title: str
+    updated_at: datetime
     # content: str
 
     @staticmethod
@@ -58,5 +59,6 @@ class ListNotes(BaseModel):
             note_id=str(doc['_id']),
             blog_id=str(doc['collection_id']),
             title = doc['title'],
+            updated_at = doc['updated_at']
             # content=doc['content']
         )

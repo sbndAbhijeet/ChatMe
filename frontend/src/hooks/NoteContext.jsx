@@ -57,16 +57,16 @@ export const NoteProvider = ({children}) => {
         return newNote;
     }
 
-    const updateTitle = async (noteId, title) => {
-        const res = await notesApi.updateNoteTitle(noteId, title);
+    // const updateTitle = async (noteId, title) => {
+    //     const res = await notesApi.updateNoteTitle(noteId, title);
 
-        if(!res.status){
-            showError(res.error);
-            return null;
-        }
+    //     if(!res.status){
+    //         showError(res.error);
+    //         return null;
+    //     }
 
-        setNotes((prev) => prev.map(note => note.note_id === noteId ? {...note, title} : note));
-    }
+    //     setNotes((prev) => prev.map(note => note.note_id === noteId ? {...note, title} : note));
+    // }
 
     // const updateContent = async (noteId, content) => {
     //     const res = await notesApi.updateNoteContent(noteId, content);
@@ -102,7 +102,7 @@ export const NoteProvider = ({children}) => {
             loading,
             loadNotes,
             createNote,
-            updateTitle,
+            // updateTitle,
             // updateContent,
             deleteNote,
         }}
@@ -123,5 +123,5 @@ export const useNotes = () => {
 
 /*
 Note:
-For getNotes and UpdateContent we are not making an global context as we are not going to use them in multiple pages as view management.
+For getNotes and UpdateNote we are not making an global context as we are not going to use them in multiple pages as view management.
 */

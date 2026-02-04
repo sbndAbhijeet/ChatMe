@@ -71,36 +71,39 @@ export async function getNotes(collection_id) {
   }
 }
 /* Test
-getNotes('695d4e8151ae53cf487e8621')
+
+ */
+getNotes('695d15f5407c32eb8db9b317')
 .then(res => console.log(res))
 .catch(err => console.log(err))
- */
 
-export async function updateNoteTitle(note_id, title) {
-    try {
-        const res = await apiClient.patch(`${BASE_URL}/title/${note_id}/`, {"title":title});
-        const data = res.data
-        return {
-            status: data.status,
-            message: data.status ? data.message : null,
-            error: data.status ? null : data.message
-        }
-    } catch (error) {
-        return {
-            status: false,
-            message: null,
-            error: error.status
-        }
-    }
-}
+// export async function updateNoteTitle(note_id, title) {
+//     try {
+//         const res = await apiClient.patch(`${BASE_URL}/title/${note_id}/`, {"title":title});
+//         const data = res.data
+//         return {
+//             status: data.status,
+//             message: data.status ? data.message : null,
+//             error: data.status ? null : data.message
+//         }
+//     } catch (error) {
+//         return {
+//             status: false,
+//             message: null,
+//             error: error.status
+//         }
+//     }
+// }
 /*Test
 updateNoteTitle('697b5b89f8fb94a2d67b01ab', 'Updated title').then(res => console.log(res)).catch(err => console.log(err))
 */
 
 
-export async function updateNoteContent(note_id, content) {
+export async function updateNote(note_id, updatedData) {
     try {
-        const res = await apiClient.patch(`${BASE_URL}/content/${note_id}/`, {"content": content});
+        console.log("update note api")
+        console.log(updatedData)
+        const res = await apiClient.patch(`${BASE_URL}/${note_id}/`, updatedData);
         const data = res.data
         return {
             status: data.status,
@@ -108,6 +111,7 @@ export async function updateNoteContent(note_id, content) {
             error: data.status ? null : data.message
         }
     } catch (error) {
+        console.log(error)
         return {
             status: false,
             error: error.status
@@ -115,7 +119,12 @@ export async function updateNoteContent(note_id, content) {
     }
 }
 /*Test
-updateNoteContent('697b5b89f8fb94a2d67b01ab', 'Updated content').then(res => console.log(res)).catch(err => console.log(err))
+updateNote('697b5b89f8fb94a2d67b01ab', {'title':'noteApi change', 'content':'Updated content'}).then(res => console.log(res)).catch(err => console.log(err))
+
+output:
+{timestamp=
+status=
+message=}
 */
 
 

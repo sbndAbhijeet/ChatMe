@@ -5,17 +5,16 @@ import PlusButton from "../../components/PlusButton";
 import { useBlog } from "../../hooks/BlogContext";
 import { useNotes } from "../../hooks/NoteContext";
 
-// Random timestamp (last 7 days)
-const randomTime = () => {
-  const now = Date.now();
-  const past = now - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000);
-  return new Date(past).toLocaleDateString(undefined, {
+const formatDate = (iso) => {
+  return new Date(iso).toLocaleString("en-IN", {
+    day: "2-digit",
     month: "short",
-    day: "numeric",
+    year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   });
 };
+
 
 function Blogs() {
   const { blogs, loadBlogs, loading } = useBlog();
@@ -113,7 +112,7 @@ function Blogs() {
                       </span>
 
                       <span className="text-xs text-gray-500 group-hover:text-gray-600">
-                        {randomTime()}
+                        {formatDate(note.updated_at)}
                       </span>
 
                     </div>

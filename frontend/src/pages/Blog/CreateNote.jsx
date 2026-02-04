@@ -35,33 +35,32 @@ function CreateNote() {
     if (!title.trim()) return showToast("Note title required");
 
     // validation first
-if (createNewBlog && !newBlogName.trim()) {
-  return showToast("Enter new blog name");
-}
+    if (createNewBlog && !newBlogName.trim()) {
+      return showToast("Enter new blog name");
+    }
 
-if (!createNewBlog && !selectedBlog) {
-  return showToast("Select a blog");
-}
+    if (!createNewBlog && !selectedBlog) {
+      return showToast("Select a blog");
+    }
 
-if (createNewBlog) {
-  const data = {
-    "blog_name": newBlogName,
-    "note": {
-      title,
-      content,
-    },
-  };
+    if (createNewBlog) {
+      const data = {
+        "blog_name": newBlogName,
+        "note": {
+          title,
+          content,
+        },
+      };
 
-  createBlogWithNote(data);
-} else {
-  const data = {
-    title,
-    content,
-  };
+      createBlogWithNote(data);
+    } else {
+      const data = {
+        title,
+        content,
+      };
 
-  createNote(selectedBlogId, data);
-}
-
+      createNote(selectedBlogId, data);
+    }
 
     const payload = {
       title,
@@ -208,12 +207,16 @@ if (createNewBlog) {
       </div>
 
       {toast && (
-        <div className="fixed inset-0 flex justify-center pt-20 pointer-events-none">
-          <div className="px-6 py-4 rounded-xl shadow-xl bg-gradient-to-r from-[#618985]/90 to-emerald-600/90 text-white">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+            <div
+            className="px-6 py-3 rounded-xl shadow-xl
+            bg-gradient-to-r from-[#618985]/90 to-emerald-600/90 text-white
+            max-w-sm text-center break-words"
+            >
             {toast}
-          </div>
+            </div>
         </div>
-      )}
+        )}
     </div>
   );
 }

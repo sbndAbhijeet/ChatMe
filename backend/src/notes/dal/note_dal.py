@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 from uuid import uuid4
 from datetime import datetime
 
-from src.notes.schemas.notes import NoteIn, ListNotes, CreatedNote, Note
+from src.notes.schemas.notes import NoteIn, ListNotes, CreatedNote, Note, NoteModel
 from src.notes.schemas.service import RequestStatus
 
 # Aim to reply in json only
@@ -63,48 +63,48 @@ class NoteDAL:
         return notes
 
     # update note title
-    async def update_note_title(
-        self,
-        note_id: str,
-        new_title: str,
-        session=None
-    ) -> RequestStatus:
-        try:
-            for note in self._note_collection.find({"_id": ObjectId(note_id)}):
-                if note_id == note['_id']:
-                    return RequestStatus(timestamp= datetime.now(), status=False, message="Note not found")
-            res = await self._note_collection.find_one_and_update(
-                {"_id": ObjectId(note_id)},
-                {
-                    "$set": {
-                        "title": new_title,
-                        "updated_at":datetime.now()
-                    }
-                },
-                session=session,
-                return_document=ReturnDocument.AFTER
-            )
+    # async def update_note_title(
+    #     self,
+    #     note_id: str,
+    #     new_title: str,
+    #     session=None
+    # ) -> RequestStatus:
+    #     try:
+    #         for note in self._note_collection.find({"_id": ObjectId(note_id)}):
+    #             if note_id == note['_id']:
+    #                 return RequestStatus(timestamp= datetime.now(), status=False, message="Note not found")
+    #         res = await self._note_collection.find_one_and_update(
+    #             {"_id": ObjectId(note_id)},
+    #             {
+    #                 "$set": {
+    #                     "title": new_title,
+    #                     "updated_at":datetime.now()
+    #                 }
+    #             },
+    #             session=session,
+    #             return_document=ReturnDocument.AFTER
+    #         )
             
-            if res is None:
-                return RequestStatus(
-                    timestamp=datetime.now(),
-                    status=False,
-                    message=f"Note not found"
-                )
+    #         if res is None:
+    #             return RequestStatus(
+    #                 timestamp=datetime.now(),
+    #                 status=False,
+    #                 message=f"Note not found"
+    #             )
             
-            return RequestStatus(
-                timestamp=datetime.now(),
-                status=True,
-                message=f"Note title updated successfully"
-            )
-        except Exception as e:
-            return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
+    #         return RequestStatus(
+    #             timestamp=datetime.now(),
+    #             status=True,
+    #             message=f"Note title updated successfully"
+    #         )
+    #     except Exception as e:
+    #         return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
     
     # need to update
-    async def update_note_content(
+    async def update_note(
         self,
         note_id: str,
-        new_content: str,
+        data: NoteModel,
         session=None
     ) -> RequestStatus:
         try:
@@ -112,7 +112,8 @@ class NoteDAL:
                 {"_id": ObjectId(note_id)},
                 {
                     '$set': {
-                        'content': new_content,
+                        'title': data.title,
+                        'content': data.content,
                         'updated_at': datetime.now()
                     },
                 },
@@ -129,7 +130,7 @@ class NoteDAL:
             return RequestStatus(
                 timestamp=datetime.now(),
                 status=True,
-                message=f"Note content updated successfully"
+                message=f"Note updated successfully"
             )
         except Exception as e:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
