@@ -17,6 +17,7 @@ export async function getBlogs() {
         }
     }
 }
+// getBlogs().then(res => console.log(res)).catch(err => console.log(err))
 
 // input formtat: {blog_name: blogName} | /blog/ with payload
 export async function createBlog(blogName) {

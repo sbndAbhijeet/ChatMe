@@ -9,7 +9,7 @@ export const useTools = () => {
 
 export const GlobalToolsProvider = (props) => {
     const [selectedTools, setSelectedTools] = useState([]);
-    const [globalModel, setGlobalModel] = useState('openai/gpt-oss-20b:free');
+    const [globalModel, setGlobalModel] = useState('arcee-ai/trinity-large-preview:free');
     const { id: chat_session} = useParams();
 
     return (

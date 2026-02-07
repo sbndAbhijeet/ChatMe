@@ -1,14 +1,21 @@
 import { useEffect, useState, useRef } from 'react';
-import {useParams, useNavigate, useLocation}  from "react-router-dom"
-import logo from "../../assets/non-bg-logo.png";
+import {useParams, useNavigate, useLocation}  from "react-router-dom";
 import ReactMarkdown from 'react-markdown';
+import { Save } from "lucide-react";
 import remarkGfm from 'remark-gfm';
-import { useHistory } from '../../hooks/GlobalChatHistory';
+
+import logo from "../../assets/non-bg-logo.png";
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
+import {faCirclePlus} from "@fortawesome/free-solid-svg-icons";
+
 import Input from '../../components/Input';
-import SelectedTools from '../../components/SelectedTools';
+import SelectedTools from '../../components/SelectedTools'; 
+// import PopUpNote from '../../components/PopUpNote';
+
+import { useHistory } from '../../hooks/GlobalChatHistory';
 import { useTools } from '../../hooks/GlobalTools';
+
 
 
 function ChatBot() {
@@ -31,8 +38,6 @@ function ChatBot() {
   // console.log(currentChat)
   const chatHistory = chat_session === "0" ? [] : currentChat?.messages ?? [];
   const location = useLocation();
-
-  
 
   // Load chat messages for current session
   // useEffect(() => {
@@ -220,6 +225,21 @@ function ChatBot() {
     );
   }
 
+  //Save to Note
+  const [open, setOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState("");
+
+  const redirectToCreateNote = () => {
+    setOpen(true)
+
+    navigate("/create-note", {
+      state: {
+        content: selectedMessage
+      }
+    });
+    console.log("Sent message", selectedMessage)
+    setOpen(false)
+  }
 
   return (
     <div className="flex flex-col h-full h-screen flex overflow-hidden">
@@ -267,6 +287,20 @@ function ChatBot() {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {isTyping && isLast && isBot ? displayedBotMessage : chat.message}
                     </ReactMarkdown>
+                    {/* Small save icon */}
+                    {isBot && (
+                      <button
+                        onClick={() => {
+                          setOpen(true)
+                          setSelectedMessage(chat.message);
+                          // setOpen(true);
+                        }}
+                        className="hover:text-blue-600 mt-2"
+                      >
+                        <Save size={16} />
+                      </button>
+                    )}
+
                   </div>
                 )}
               </div>
@@ -275,6 +309,50 @@ function ChatBot() {
           })
         )}
       </div>
+      {/* Will Implement Later for now redirect to new Note */}
+      {open && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+
+          <div className="bg-white text-[#414535] p-5 rounded-xl w-[320px] space-y-4 shadow">
+
+            <h1 className="text-lg font-semibold">
+              You will be redirected to Create Note
+            </h1>
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setOpen(false)}
+                className="px-3 py-1 rounded border"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={redirectToCreateNote}
+                className="bg-[#96BBBB] px-4 py-1 rounded text-[#414535]"
+              >
+                Sure
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* {open && (
+        <PopUpNote
+          collection={collection}
+          setCollection={setCollection}
+          title={title}
+          setTitle={setTitle}
+          setOpen={setOpen}
+          selectedMessage={selectedMessage}
+          // saveNote={saveNote}
+        />
+      )} */}
       <Input
         message={message}
         setMessage={setMessage}

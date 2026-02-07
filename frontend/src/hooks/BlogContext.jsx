@@ -12,7 +12,7 @@ export const BlogProvider = (props) => {
     const [loading, setLoading] = useState(true)
 
     const {showError} = useError()
-    const {setNotes} = useNotes()
+    // const {setNotes} = useNotes()
 
     useEffect(() => {
         loadBlogs()
@@ -29,8 +29,7 @@ export const BlogProvider = (props) => {
         }
         //initialize notes array
         const normalized = res.blogs.map((b) => ({
-            ...b,
-            notes:[]
+            ...b
         }))
 
         setBlogs(normalized);
@@ -47,8 +46,7 @@ export const BlogProvider = (props) => {
 
         const newBlog = {
             blog_id: res.blog_id,
-            blog_name: blogName,
-            notes: []
+            blog_name: blogName
         };
 
         setBlogs((prev) => [...prev, newBlog])
@@ -70,8 +68,7 @@ export const BlogProvider = (props) => {
         const {blog_id, note_id} = res;
         const newBlog = {
             blog_id: blog_id,
-            blog_name: data.blog_name,
-            notes: [note_id]
+            blog_name: data.blog_name
         };
         
         setBlogs((prev) => [...prev, newBlog])
@@ -79,7 +76,7 @@ export const BlogProvider = (props) => {
             note_id: res.note_id,
             ...data.note
         }
-        setNotes((prev) => [...prev, newNote]);
+        // setNotes((prev) => [...prev, newNote]);
     }
 
     const renameBlog = async (blogId, blogName) => {

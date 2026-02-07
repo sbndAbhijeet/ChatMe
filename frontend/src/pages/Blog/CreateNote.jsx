@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { use, useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useBlog } from "../../hooks/BlogContext";
 import { useNotes } from "../../hooks/NoteContext";
 
 function CreateNote() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { blogs, createBlogWithNote } = useBlog();
   const {createNote} = useNotes();
@@ -21,6 +22,14 @@ function CreateNote() {
 
   const [toast, setToast] = useState(null);
 
+  useEffect(() => {
+    console.log("At Create Note")
+    if (location.state) {
+      console.log("Received:", location.state.content);
+      const passedContent = location.state?.content || '';
+      setContent(passedContent);
+    }
+  }, [location]);
 
   const filteredBlogs = blogs.filter(b =>
     b.blog_name.toLowerCase().includes(search.toLowerCase())
