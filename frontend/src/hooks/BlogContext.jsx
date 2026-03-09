@@ -96,12 +96,13 @@ export const BlogProvider = (props) => {
         const res = await blogApi.deleteBlogNote(blogId)
 
         if(!res.status){
+            console.log(res.error)
             showError(res.error)
             return;
         }
 
         setBlogs((prev) => prev.filter(
-            (b) =>  b.blog_id === blogId
+            (b) =>  b.blog_id !== blogId
         ))
     }
     

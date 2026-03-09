@@ -71,11 +71,11 @@ export async function getNotes(collection_id) {
   }
 }
 /* Test
-
- */
 getNotes('695d15f5407c32eb8db9b317')
 .then(res => console.log(res))
 .catch(err => console.log(err))
+ */
+
 
 // export async function updateNoteTitle(note_id, title) {
 //     try {

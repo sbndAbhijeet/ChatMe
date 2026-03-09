@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from "react";
+import ErrorPopup from "../components/ErrorPopup";
 
 const ErrorContext = createContext();
 

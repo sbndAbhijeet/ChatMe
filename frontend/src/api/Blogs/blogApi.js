@@ -30,11 +30,11 @@ export async function createBlog(blogName) {
         }
         
         return output
-    } catch(err){
+    } catch(error){
         return {
             status: false,
             blog_id: null,
-            error: err.response.statusText
+            error: error?.response?.data?.detail
         }
     }
 }
@@ -116,7 +116,7 @@ renameBlog('69786bc03d75d4fc1a7a2b0d', 'From Frontend: 27th Tuesday')
 
 export async function deleteBlogNote(blog_id){
     try{
-        const res = await apiClient.delete(`/blog/${blog_id}/`)
+        const res = await apiClient.delete(`/blog/${blog_id}`)
 
         if(res.data.status == true)
             return {
@@ -131,7 +131,7 @@ export async function deleteBlogNote(blog_id){
     } catch(err){
         return {
             status: false,
-            error: err.response.statusText
+            error: err?.response?.data?.detail || "Failed to delete blog note"
         }
     }
 }

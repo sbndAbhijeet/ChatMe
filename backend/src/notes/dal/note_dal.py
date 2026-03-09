@@ -152,17 +152,17 @@ class NoteDAL:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
     
     # # delete notes by collection
-    # async def delete_notes_by_collection(
-    #     self,
-    #     collection_id: str,
-    #     session=None
-    # ) -> "RequestStatus":
-    #     try:
-    #         res = await self._note_collection.delete_many(
-    #             {'collection_id': ObjectId(collection_id)},
-    #             session=session
-    #         )
+    async def delete_notes_by_collection(
+        self,
+        collection_id: str,
+        session=None
+    ) -> "RequestStatus":
+        try:
+            res = await self._note_collection.delete_many(
+                {'collection_id': ObjectId(collection_id)},
+                session=session
+            )
 
-    #         return RequestStatus(timestamp= datetime.now(), status=True) 
-    #     except Exception as e:
-    #         return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
+            return RequestStatus(timestamp= datetime.now(), status=True) 
+        except Exception as e:
+            return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))

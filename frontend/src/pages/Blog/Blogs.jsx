@@ -1,5 +1,10 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import {Delete} from "lucide-react";
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faTrash} from "@fortawesome/free-solid-svg-icons"
+
 import PlusButton from "../../components/PlusButton";
 
 import { useBlog } from "../../hooks/BlogContext";
@@ -17,8 +22,8 @@ const formatDate = (iso) => {
 
 
 function Blogs() {
-  const { blogs, loadBlogs, loading } = useBlog();
-  const { notes, loadNotes } = useNotes();
+  const { blogs, loadBlogs, loading, deleteBlogNote } = useBlog();
+  const { notes, loadNotes, deleteNote } = useNotes();
 
   // Load blogs on mount
   useEffect(() => {
@@ -91,6 +96,17 @@ function Blogs() {
                 <h2 className="text-lg font-medium text-gray-800">
                   {blog.blog_name}
                 </h2>
+                <button
+                  onClick = {async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // console.log(blog.blog_id);
+                    await deleteBlogNote(blog.blog_id)
+                  }}
+                  className="hover:text-red-700 hover:cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
               </div>
 
               {/* Notes */}
@@ -115,6 +131,14 @@ function Blogs() {
                         {formatDate(note.updated_at)}
                       </span>
 
+                      <button
+                      onClick = {async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await deleteNote(note.note_id)
+                      }}
+                      className="hover:text-red-700 hover:cursor-pointer"
+                      ><FontAwesomeIcon icon={faTrash} /></button>
                     </div>
                   </Link>
                 ))}
