@@ -1,7 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useHistory } from '../../hooks/GlobalChatHistory';
-import {MoreVertical, Plus} from "lucide-react";
+import {
+  MoreVertical,
+  PanelLeftClose,
+  PanelLeftOpen,
+  MessageSquarePlus,
+  NotebookPen,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  UserCircle2,
+  LogOut,
+} from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-icons"
 
@@ -28,13 +39,12 @@ const Sidebar = ({ type }) => {
   
   const [showMenu, setShowMenu] = useState({menu: false, key: ""});
   const [rename, setRename] = useState({id: -1, rename: false})
-  const [selectedId, setSelectedId] = useState(null);
-  const [addBlog, setAddBlog] = useState(false);
   const [expandedBlogs, setExpandedBlogs] = useState({});
 
   const navItems = [
-    { path: '/', icon: '💬', label: 'New Chat', end: true },
-    { path: '/settings', icon: '⚙️', label: 'Settings' },
+    { path: '/', icon: MessageSquarePlus, label: 'Home', end: true },
+    { path: '/settings', icon: Settings, label: 'Settings' },
+    // { path: '/', icon: , label: 'Home' },
   ];
 
   const renameSession = (chatId) => {
@@ -93,25 +103,26 @@ const Sidebar = ({ type }) => {
       {/* Collapse Button */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="p-3 hover:bg-[#618985]/30 flex items-center justify-center"
+        className="mx-2 mt-2 mb-3 p-3 rounded-md hover:bg-[#618985]/30 flex items-center justify-center"
+        aria-label="Toggle sidebar"
       >
-        {isCollapsed ? '🫣': '🙂'}
+        {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
       </button>
 
       {/* New Chat Button */}
       <Link
         to="/chatbot/0"
-        className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === '/' ? 'bg-[#618985]/50' : ''}`}
+        className={`mx-2 mb-2 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === '/chatbot/0' ? 'bg-[#618985]/50' : ''}`}
       >
-        <span className="p-3 text-xl">{'💬'}</span>
+        <span className="p-3"><MessageSquarePlus size={18} /></span>
         {!isCollapsed && <span className="ml-2">New Chat</span>}
       </Link>
       
       <Link
         to="/blogs"
-        className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === '/' ? 'bg-[#618985]/50' : ''}`}
+        className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname.startsWith('/blogs') ? 'bg-[#618985]/50' : ''}`}
       >
-        <span className="p-3 text-xl">{'📝'}</span>
+        <span className="p-3"><NotebookPen size={18} /></span>
         {!isCollapsed && <span className="ml-2">Blogs</span>}
       </Link>
 
@@ -163,7 +174,7 @@ const Sidebar = ({ type }) => {
                 </div>
 
                 {(showMenu.menu && chat.id === showMenu.key) && (
-                  <div className='flex' onClick={(e) => e.preventDefault()}> {/* ✅ Prevent navigation */}
+                  <div className='flex' onClick={(e) => e.preventDefault()}>
                     <button
                       className="p-1 hover:cursor-pointer text-green-600"
                       onClick={(e) => {
@@ -224,7 +235,7 @@ const Sidebar = ({ type }) => {
                   >
                     {blog.blog_name}
                     <span className="text-xs">
-                      {expandedBlogs[blog.blog_id] ? '▲' : '▼'}
+                      {expandedBlogs[blog.blog_id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </span>
                   </div>
 
@@ -259,7 +270,7 @@ const Sidebar = ({ type }) => {
             to={item.path}
             className={`mx-2 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname === item.path ? 'bg-[#618985]/50' : ''}`}
           >
-            <span className="p-3 text-xl">{item.icon}</span>
+            <span className="p-3"><item.icon size={18} /></span>
             {!isCollapsed && <span className="ml-2">{item.label}</span>}
           </Link>
         ))}
@@ -268,8 +279,8 @@ const Sidebar = ({ type }) => {
       {/* User Profile */}
       <div className={`flex items-center p-3 border-t border-[#618985]/30 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-[#96BBBB] flex items-center justify-center text-[#414535] font-bold">
-            U
+          <div className="w-8 h-8 rounded-full bg-[#96BBBB] flex items-center justify-center text-[#414535]">
+            <UserCircle2 size={18} />
           </div>
           {!isCollapsed && (
             <div className="ml-3">
@@ -279,7 +290,9 @@ const Sidebar = ({ type }) => {
           )}
         </div>
         {!isCollapsed && (
-          <button onClick={handleLogout} className="text-sm hover:text-[#96BBBB]">Logout</button>
+          <button onClick={handleLogout} className="text-sm hover:text-[#96BBBB] flex items-center gap-1">
+            <LogOut size={14} /> Logout
+          </button>
         )}
       </div>
     </div>
