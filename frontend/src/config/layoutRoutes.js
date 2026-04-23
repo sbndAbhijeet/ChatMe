@@ -28,6 +28,13 @@ export const layoutRoutes = [
     type: "note"
   },
   {
+    pattern: "/settings",
+    sidebar: true,
+    header: false,
+    footer: false,
+    type: "settings"
+  },
+  {
     pattern: "/blogs/:blogId/note/:noteId",
     sidebar: true,
     header: false,

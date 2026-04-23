@@ -23,17 +23,20 @@ class CollectionService:
         self,
         collection_name: str,
         note_data: NoteIn,
+        user_id: str,
         session=None
     ):
         try:
             collection_res = await self._blog_dal.create_collection(
                 blog_name=collection_name,
+                user_id=user_id,
                 session=session
             )
 
             note_res = await self._note_dal.create_note(
                 collection_id=str(collection_res.collection_id),
                 data=note_data,
+                user_id=user_id,
                 session=session
             )
 
@@ -51,21 +54,28 @@ class CollectionService:
     async def delete_collection(
         self,
         collection_id: str,
+        user_id: str,
         session=None
     ) -> RequestStatus:
-        collection_exists = await self._blog_dal.collection_exists(collection_id=ObjectId(collection_id))
+        collection_exists = await self._blog_dal.collection_exists(
+            collection_id=ObjectId(collection_id),
+            user_id=user_id,
+            session=session
+        )
 
         if not collection_exists:
             return RequestStatus(timestamp=datetime.now(), status=False, message="Collection does not exist")
         try:
             
             await self._note_dal.delete_notes_by_collection(
-                collection_id=ObjectId(collection_id),
+                collection_id=collection_id,
+                user_id=user_id,
                 session=session
             )
             
             blog_res = await self._blog_dal.delete_collection(
-                collection_id=ObjectId(collection_id),
+                collection_id=collection_id,
+                user_id=user_id,
                 session=session
             )
 

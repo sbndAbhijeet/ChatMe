@@ -15,11 +15,12 @@ class BlogDAL:
         self._blog_collection = blog_collection
 
     # create
-    async def create_collection(self, blog_name: str, session=None):
+    async def create_collection(self, blog_name: str, user_id: str, session=None):
         try:
             res = await self._blog_collection.insert_one(
                 {
                     "name": blog_name,
+                    "user_id": user_id,
                     "created_at": datetime.now(),
                 },session=session
             )
@@ -39,26 +40,26 @@ class BlogDAL:
     #     return res'''
 
     # collection existance
-    async def collection_exists(self, collection_id: ObjectId, session=None) -> bool:
+    async def collection_exists(self, collection_id: ObjectId, user_id: str, session=None) -> bool:
         count = await self._blog_collection.count_documents(
-            {"_id": collection_id},
+            {"_id": collection_id, "user_id": user_id},
             session=session
         )
         return count > 0
     
     # get all collections
-    async def list_collections(self, session=None):
+    async def list_collections(self, user_id: str, session=None):
         blogs = []
-        async for doc in self._blog_collection.find({}):
+        async for doc in self._blog_collection.find({"user_id": user_id}, session=session):
             blogs.append(ListCollections.from_doc(doc))
         
         return blogs
     
     # update
-    async def rename_collection(self, id: str, name: str, session=None) -> RequestStatus:
+    async def rename_collection(self, id: str, name: str, user_id: str, session=None) -> RequestStatus:
         try:
             res = await self._blog_collection.find_one_and_update(
-                {"_id": ObjectId(id)},
+                {"_id": ObjectId(id), "user_id": user_id},
                 {
                     "$set": {
                         "name": name,
@@ -73,10 +74,10 @@ class BlogDAL:
             return RequestStatus(timestamp=datetime.now(), status=False, message=str(e))
     
     # delete
-    async def delete_collection(self, collection_id: str, session=None) -> RequestStatus:
+    async def delete_collection(self, collection_id: str, user_id: str, session=None) -> RequestStatus:
         try:
                 res = await self._blog_collection.delete_one(
-                    {"_id": ObjectId(collection_id)},
+                    {"_id": ObjectId(collection_id), "user_id": user_id},
                     session=session
                 )
 

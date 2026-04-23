@@ -55,10 +55,17 @@ class ChatBot:
     def __init__(self, chatbot_collection: AsyncIOMotorCollection):
         self._chatbot_collection = chatbot_collection
 
-    async def is_new_thread(self, id: str | ObjectId):
+    async def is_new_thread(
+            self, 
+            id: str | ObjectId,
+            user_id: str,
+        ):
         "Returns True if this chat thread has no messages yet or invalid chat id"
         doc_id = ObjectId(id)
-        doc = await self._chatbot_collection.find_one({"_id": doc_id}, {"messages": 1})
+        doc = await self._chatbot_collection.find_one({
+            "_id": doc_id,
+            "user_id": user_id
+        }, {"messages": 1})
 
         # if the doc dosen't exist or messages array is empty -> new thread
         if doc is None:
@@ -68,10 +75,11 @@ class ChatBot:
         
         return False
     
-    async def create_new_chat(self, chat_id: int, session=None) -> str:
+    async def create_new_chat(self, chat_id: int, user_id: str, session=None) -> str:
         response = await self._chatbot_collection.insert_one(
             {
                 "chat_id": chat_id,
+                "user_id": user_id,
                 "title": f"New Chat - {chat_id}",
                 "messages": [],
             },
@@ -79,9 +87,12 @@ class ChatBot:
         )
         return str(response.inserted_id)
     
-    async def get_chat_history(self, session=None):
+    async def get_chat_history(self, user_id: str, session=None):
         cursor = await self._chatbot_collection.aggregate(
             [
+                {
+                    "$match": {"user_id": user_id}
+                },
                 {
                     "$project":{
                         "_id": 1,
@@ -105,10 +116,11 @@ class ChatBot:
     async def get_current_chat(
         self,
         id: str | ObjectId,
+        user_id: str,
         session=None
     ):
         result = await self._chatbot_collection.find_one(
-            {"_id": ObjectId(id)},
+            {"_id": ObjectId(id), "user_id": user_id},
             session=session
         )
         if result: 
@@ -123,10 +135,11 @@ class ChatBot:
             id: str | ObjectId,
             sender: str,
             msg: str,
+            user_id: str,
             session=None
         ):
         result = await self._chatbot_collection.find_one_and_update(
-            {"_id": ObjectId(id)},
+            {"_id": ObjectId(id), "user_id": user_id},
             {
                 "$push": {
                     "messages":{
@@ -146,10 +159,11 @@ class ChatBot:
     async def delete_chat(
             self,
             doc_id: str | ObjectId,
+            user_id: str,
             session=None
         ) -> bool:
             response = await self._chatbot_collection.delete_one(
-                {"_id": ObjectId(doc_id)},
+                {"_id": ObjectId(doc_id), "user_id": user_id},
                 session=session
             )
             return response.deleted_count == 1
@@ -158,10 +172,11 @@ class ChatBot:
             self,
             id: str | ObjectId,
             title: str,
+            user_id: str,
             session=None
         ) -> ChatList | None:
         result = await self._chatbot_collection.find_one_and_update(
-            {"_id": ObjectId(id)},
+            {"_id": ObjectId(id), "user_id": user_id},
             {
                 "$set": {
                     "title": title

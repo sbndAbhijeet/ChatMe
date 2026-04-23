@@ -16,12 +16,17 @@ load_dotenv()
 
 GRAPH_VERSION = "v1"   # change to v2, v3, v4 whenever your graph changes
 
-@lru_cache(maxsize=5)
-def get_llm(model_id):
+
+def _resolve_api_key(api_key: str | None = None):
+    return api_key or os.getenv("OPENROUTER_API_KEY")
+
+
+@lru_cache(maxsize=20)
+def get_llm(model_id, api_key=None):
     print("Model ID: ", model_id)
     return ChatOpenAI(
         model=model_id,
-        api_key=os.getenv("OPENROUTER_API_KEY"),
+        api_key=_resolve_api_key(api_key),
         base_url="https://openrouter.ai/api/v1",
         max_retries=2,
         timeout=30,
@@ -33,10 +38,11 @@ DB_URI = os.getenv("MONOGB_URI")
 COLLECTION_NAME = "luminchat_checkpointer"
 MAX_MESSAGES = 50
 
-client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1"
-)
+def get_openai_client(api_key: str | None = None):
+    return OpenAI(
+        api_key=_resolve_api_key(api_key),
+        base_url="https://openrouter.ai/api/v1"
+    )
 
 class State(TypedDict):
     messages: Annotated[list, add_messages] #stores conversation history 
@@ -123,7 +129,8 @@ def chatbot(state: State, config):
     Clears tool_results after use.
     """
     model_id = config["configurable"]['model']
-    llm = get_llm(model_id) # every time reinitialized (demerit)
+    api_key = config["configurable"].get("api_key")
+    llm = get_llm(model_id, api_key) # every time reinitialized (demerit)
     full_input = state['messages'] + state.get('tool_results',[])
     result = llm.invoke(full_input)
     return {
@@ -132,7 +139,7 @@ def chatbot(state: State, config):
     }
 
 # Title Generation
-async def generate_title(user: str):
+async def generate_title(user: str, api_key: str | None = None):
     SYSTEM_PROMPT = """
     You are a Title Generator. Never answer to the user query.
     Steps to be followed:
@@ -151,6 +158,7 @@ async def generate_title(user: str):
     Response: Side Hustle Ideas at Home
     """
 
+    client = get_openai_client(api_key)
     response = client.chat.completions.create(
         model="openai/gpt-oss-20b:free",
         messages=[
@@ -202,12 +210,13 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str):
+async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None):
     config = {
         "configurable": {
             "thread_id": doc_id,
             "graph_version": GRAPH_VERSION,
-            "model": model
+            "model": model,
+            "api_key": api_key,
         }
     }
 

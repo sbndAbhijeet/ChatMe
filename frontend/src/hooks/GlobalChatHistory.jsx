@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getHistory, postMessage, renameTitle, create_new_chat, deleteChat, getOngoingChat } from "../api/chatDocs";
+import { useAuth } from "./AuthContext";
 
 export const ChatHistoryContext = createContext(null);
 
@@ -13,12 +14,18 @@ export const ChatHistoryProvider = (props) => {
     // Would typically come from your API/local storage
     const [isTyping, setIsTyping] = useState(false);
     const [historyLoading, setHistoryLoading] = useState(false);
+    const { token, isAuthenticated } = useAuth();
 
     useEffect(() => {
         fetchHistory();
-    }, []);
+    }, [token, isAuthenticated]);
 
     const fetchHistory = async () => {
+        if (!isAuthenticated) {
+            setHistory([]);
+            return;
+        }
+
         const {data, error} = await getHistory();
         if(error){
             alert("Error in Fetching data: "+error)
@@ -67,7 +74,6 @@ export const ChatHistoryProvider = (props) => {
             alert("Error in creating new chat: "+error)
             return;
         }
-        fetchHistory();
         return data.id;
     }
 

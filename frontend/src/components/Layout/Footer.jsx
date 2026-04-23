@@ -31,8 +31,8 @@ const Footer = () => {
                     </h3>
                     <ul className="space-y-2">
                     <li><Link to="/" className="hover:text-[#96BBBB] transition-colors">Home</Link></li>
-                    <li><Link to="/" className="hover:text-[#96BBBB] transition-colors">ChatBot</Link></li>
-                    <li><Link to="/other" className="hover:text-[#96BBBB] transition-colors">Other</Link></li>
+                    <li><Link to="/login" className="hover:text-[#96BBBB] transition-colors">Login</Link></li>
+                    <li><Link to="/register" className="hover:text-[#96BBBB] transition-colors">Register</Link></li>
                     </ul>
                 </div>
 

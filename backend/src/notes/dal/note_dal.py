@@ -21,6 +21,7 @@ class NoteDAL:
             self,
             collection_id: str,
             data: NoteIn,
+            user_id: str,
             session=None
         ):
         try:
@@ -29,6 +30,7 @@ class NoteDAL:
                     'title': data.title,
                     'content': data.content,
                     'collection_id': ObjectId(collection_id),
+                    'user_id': user_id,
                     'created_at': datetime.now(),
                     'updated_at': datetime.now()
                 },session=session
@@ -39,9 +41,9 @@ class NoteDAL:
             return RequestStatus(timestamp= datetime.now(), status=False, message=str(e))
     
     # a particular note
-    async def get_note(self, note_id: str, session=None):
+    async def get_note(self, note_id: str, user_id: str, session=None):
         res = await self._note_collection.find_one(
-            {"_id": ObjectId(note_id)}, session=session
+            {"_id": ObjectId(note_id), "user_id": user_id}, session=session
         )
 
         return Note.note_doc(res)
@@ -50,12 +52,13 @@ class NoteDAL:
     async def get_collection_notes(
         self,
         collection_id: str,
+        user_id: str,
         session=None
     ) -> list[ListNotes]:
         
         notes = []
         async for doc in self._note_collection.find(
-            {"collection_id": ObjectId(collection_id)},
+            {"collection_id": ObjectId(collection_id), "user_id": user_id},
             session=session
         ): 
             notes.append(ListNotes.list_doc(doc))
@@ -105,11 +108,12 @@ class NoteDAL:
         self,
         note_id: str,
         data: NoteModel,
+        user_id: str,
         session=None
     ) -> RequestStatus:
         try:
             res = await self._note_collection.find_one_and_update(
-                {"_id": ObjectId(note_id)},
+                {"_id": ObjectId(note_id), "user_id": user_id},
                 {
                     '$set': {
                         'title': data.title,
@@ -139,11 +143,12 @@ class NoteDAL:
     async def delete_note(
         self,
         note_id: str,
+        user_id: str,
         session = None
     ) -> "RequestStatus":
         try:
             res = await self._note_collection.delete_one(
-                {"_id": ObjectId(note_id)},
+                {"_id": ObjectId(note_id), "user_id": user_id},
                 session=session
             )
 
@@ -155,11 +160,12 @@ class NoteDAL:
     async def delete_notes_by_collection(
         self,
         collection_id: str,
+        user_id: str,
         session=None
     ) -> "RequestStatus":
         try:
             res = await self._note_collection.delete_many(
-                {'collection_id': ObjectId(collection_id)},
+                {'collection_id': ObjectId(collection_id), 'user_id': user_id},
                 session=session
             )
 

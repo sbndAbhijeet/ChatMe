@@ -21,6 +21,8 @@ import { useTools } from '../../hooks/GlobalTools';
 function ChatBot() {
   const [message, setMessage] = useState("");
   const [displayedBotMessage, setDisplayedBotMessage] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState("");
   
   const {isTyping, setIsTyping} = useHistory();
   const {selectedTools, globalModel} = useTools();
@@ -182,20 +184,17 @@ function ChatBot() {
     if(chat_session === "0"){
       const newId = history.length > 0 ? history.length+1 : 1;
       const doc_id = await createChat(newId);
+      if (!doc_id) return;
       
-      setHistory([...history, 
+      setHistory(prev => ([
+        ...prev,
         {
           "id": doc_id,
           "chat_id": newId,
           "title": `New Chat - ${newId}`,
-          "messages": [
-            {
-              "sender": "user",
-              "message": currentMessage
-            }
-          ],
+          "messages": [],
         }
-      ])
+      ]));
       
       // Small delay to let state settle
       navigate(`/chatbot/${String(doc_id)}`, { state: { initialMessage: currentMessage } });
@@ -225,10 +224,6 @@ function ChatBot() {
     );
   }
 
-  //Save to Note
-  const [open, setOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState("");
-
   const redirectToCreateNote = () => {
     setOpen(true)
 
@@ -242,7 +237,7 @@ function ChatBot() {
   }
 
   return (
-    <div className="flex flex-col h-full h-screen flex overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Fixed Header */}
       <div className="border-b border-[#618985]/30 p-4 shrink-0">
         <h1 className="text-2xl font-semibold text-[#414535] flex items-center">

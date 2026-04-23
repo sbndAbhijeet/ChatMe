@@ -7,19 +7,22 @@ import { GlobalToolsProvider } from './hooks/GlobalTools.jsx'
 import { BlogProvider } from './hooks/BlogContext.jsx'
 import { NoteProvider } from './hooks/NoteContext.jsx'
 import { ErrorProvider } from './hooks/ErrorContext.jsx'
+import { AuthProvider } from './hooks/AuthContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
     <ErrorProvider>
-      <ChatHistoryProvider>
-        <GlobalToolsProvider>
-          <NoteProvider>
-            <BlogProvider>
-              <App />
-            </BlogProvider>
-          </NoteProvider>
-        </GlobalToolsProvider>
-      </ChatHistoryProvider>
+      <AuthProvider>
+        <ChatHistoryProvider>
+          <GlobalToolsProvider>
+            <NoteProvider>
+              <BlogProvider>
+                <App />
+              </BlogProvider>
+            </NoteProvider>
+          </GlobalToolsProvider>
+        </ChatHistoryProvider>
+      </AuthProvider>
     </ErrorProvider>
   // </StrictMode>,
 )

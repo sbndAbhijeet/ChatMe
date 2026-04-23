@@ -7,6 +7,7 @@ import {faTrash, faPenToSquare, faFloppyDisk} from "@fortawesome/free-solid-svg-
 
 import { useBlog } from '../../hooks/BlogContext';
 import { useNotes } from '../../hooks/NoteContext';
+import { useAuth } from '../../hooks/AuthContext';
 
 
 const Sidebar = ({ type }) => {
@@ -23,6 +24,7 @@ const Sidebar = ({ type }) => {
   const {history, setHistory, renameChat, deleteChatSession, isTyping} = useHistory();
   const {blogs} = useBlog();
   const {notes} = useNotes();
+  const { logout, userId } = useAuth();
   
   const [showMenu, setShowMenu] = useState({menu: false, key: ""});
   const [rename, setRename] = useState({id: -1, rename: false})
@@ -32,7 +34,7 @@ const Sidebar = ({ type }) => {
 
   const navItems = [
     { path: '/', icon: '💬', label: 'New Chat', end: true },
-    { path: '/other', icon: '⚙️', label: 'Other Features' },
+    { path: '/settings', icon: '⚙️', label: 'Settings' },
   ];
 
   const renameSession = (chatId) => {
@@ -80,6 +82,11 @@ const Sidebar = ({ type }) => {
     //Closing the menu
     setShowMenu({menu: false, key: ""});
   }
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className={`flex flex-col h-full bg-[#414535] text-[#F2E3BC] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -213,7 +220,7 @@ const Sidebar = ({ type }) => {
                         [blog.blog_id]: !prev[blog.blog_id]
                       }))
                     }
-                    className="block cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30 flex justify-between items-center"
+                    className="cursor-pointer px-3 py-2 text-sm rounded-md hover:bg-[#618985]/30 flex justify-between items-center"
                   >
                     {blog.blog_name}
                     <span className="text-xs">
@@ -266,13 +273,13 @@ const Sidebar = ({ type }) => {
           </div>
           {!isCollapsed && (
             <div className="ml-3">
-              <div className="text-sm font-medium">User Name</div>
+              <div className="text-sm font-medium">{userId ? `User-${userId.slice(-4)}` : 'User'}</div>
               <div className="text-xs text-[#C19875]">Free Plan</div>
             </div>
           )}
         </div>
         {!isCollapsed && (
-          <button className="text-sm hover:text-[#96BBBB]">Logout</button>
+          <button onClick={handleLogout} className="text-sm hover:text-[#96BBBB]">Logout</button>
         )}
       </div>
     </div>

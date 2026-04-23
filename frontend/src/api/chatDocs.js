@@ -57,8 +57,6 @@ export const deleteChat = async (docId) => {
     }
 }
 
-getHistory();
-
 /* 
 getHistory:
 [

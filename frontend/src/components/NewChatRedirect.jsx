@@ -15,7 +15,7 @@ const NewChatRedirect = () => {
         // })
 
         navigate(`/chatbot/0`)
-    })
+    }, [navigate])
 
     return null;
 }

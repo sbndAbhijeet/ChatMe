@@ -175,7 +175,7 @@ const Starter = () => {
                 ))}
               </ul>
               <Link
-                to={plan.name === 'Enterprise' ? '/contact' : '/signup'}
+                to={plan.name === 'Enterprise' ? '/register' : '/register'}
                 className={`block w-full text-center py-3 px-4 rounded-lg font-medium transition-colors ${
                   plan.popular 
                     ? 'bg-[#618985] hover:bg-[#96BBBB] text-white' 
@@ -197,7 +197,7 @@ const Starter = () => {
             Join thousands of professionals already using Lumin to work smarter.
           </p>
           <Link 
-            to="/signup" 
+            to="/register" 
             className="inline-block px-8 py-3 bg-white text-[#618985] hover:bg-[#F2E3BC] rounded-lg font-medium transition-colors"
           >
             Get Started Free
