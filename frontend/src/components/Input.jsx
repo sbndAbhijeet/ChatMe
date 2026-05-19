@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCirclePlus} from "@fortawesome/free-solid-svg-icons"
 import SelectedTools from "../components/SelectedTools";
 import { useTools } from "../hooks/GlobalTools";
+import PdfSelectionModal from "./PdfSelectionModal";
 
 const Input = (
     {message, setMessage, handleSubmit, isTyping}
@@ -15,6 +16,7 @@ const Input = (
     const [toolMenu, setToolMenu] = useState(false);
     const [showModels, setShowModels] = useState(false);
     const [selectedModel, setSelectedModel] = useState("ChatGpt");
+    const [showPdfModal, setShowPdfModal] = useState(false);
     const {setGlobalModel, selectedTools, setSelectedTools} = useTools();
 
     useEffect(() => {
@@ -25,10 +27,8 @@ const Input = (
 
     const tools = {
       "🌐 Web Search": 1,
-        "📎 Attach File": 2,
-        "📖 Research": 3,
-        "🤔 Deep Thinking": 4,
-        "🎤 Voice Input": 5,
+        "📄 Select PDFs to upload": 2,
+        "🎤 Voice Input": 3,
     }
 
     const modelMeta = {
@@ -75,20 +75,28 @@ const Input = (
         // const val = tools[tool];
         // console.log(val);
         console.log(tool)
-        setSelectedTools(prev => {
-            if(prev.includes(tool)){
-                //remove
-                return prev.filter(t => t !== tool);
-            } else {
-                //add
-                return [...prev, tool];
-            }
-        });
+      if (tool === 2) {
+        setSelectedTools(prev => prev.includes(tool) ? prev : [...prev, tool]);
+        setShowPdfModal(true);
+        setToolMenu(false);
+        return;
+      }
+
+      setSelectedTools(prev => {
+        if(prev.includes(tool)){
+          //remove
+          return prev.filter(t => t !== tool);
+        } else {
+          //add
+          return [...prev, tool];
+        }
+      });
     }
 
     return (
         <div className="border-t border-[#618985]/30 p-4 shrink-0">
         <SelectedTools />
+      <PdfSelectionModal open={showPdfModal} setOpen={setShowPdfModal} />
         <form onSubmit={handleSubmit} className="flex gap-2">
         <div className='relative'>
           <img 

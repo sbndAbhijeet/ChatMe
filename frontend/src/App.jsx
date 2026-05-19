@@ -12,6 +12,7 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/Settings";
+import Pdfs from "./pages/PDFs/Pdfs";
 
 const App = () => {
 
@@ -30,6 +31,7 @@ const App = () => {
             <Route path="/chatbot" element={<NewChatRedirect/>}/>
             <Route path="/chatbot/:id" element={<ChatBot/>}/>
             <Route path="/blogs" element={<Blogs/>}/>
+            <Route path="/pdfs" element={<Pdfs/>}/>
             <Route path="/blogs/:blogId/note/:noteId" element={<EditNote/>}/>
             <Route path="/create-blog" element={<CreateBlog />}/>
             <Route path="/create-note" element={<CreateNote />}/>

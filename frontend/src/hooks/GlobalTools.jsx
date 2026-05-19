@@ -9,6 +9,7 @@ export const useTools = () => {
 
 export const GlobalToolsProvider = (props) => {
     const [selectedTools, setSelectedTools] = useState([]);
+    const [selectedPdfIds, setSelectedPdfIds] = useState([]);
     const [globalModel, setGlobalModel] = useState('arcee-ai/trinity-large-preview:free');
     const { id: chat_session} = useParams();
 
@@ -19,7 +20,9 @@ export const GlobalToolsProvider = (props) => {
             setGlobalModel,
             chat_session,
             selectedTools,
-            setSelectedTools
+            setSelectedTools,
+            selectedPdfIds,
+            setSelectedPdfIds
         }}
         >
             {props.children}

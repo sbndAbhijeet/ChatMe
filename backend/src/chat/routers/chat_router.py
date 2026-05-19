@@ -21,6 +21,7 @@ class MessageInput(BaseModel):
     message: str
     tools: list
     model: str
+    selected_document_ids: list | None = None
 
 class MessageOutput(BaseModel):
     reply: str
@@ -83,10 +84,18 @@ async def process_save_responses(
     
     is_new = await req.app.state.chatbot_dal.is_new_thread(object_id, user_id)
 
-    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key)
+    # pass selected document ids and qdrant client/collection for RAG retrieval
+    q_client = req.app.state.qdrant_client
+    q_collection = req.app.state.qdrant_collection
+
+    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_client=q_client, qdrant_collection=q_collection)
 
 
     await req.app.state.chatbot_dal.save_sender_response(object_id, "user", user_input.message, user_id)
+    # persist selected document ids as a separate system message for traceability
+    if user_input.selected_document_ids:
+        import json
+        await req.app.state.chatbot_dal.save_sender_response(object_id, "system", f"selected_documents:{json.dumps(user_input.selected_document_ids)}", user_id)
     await req.app.state.chatbot_dal.save_sender_response(object_id, "bot", result, user_id)
 
     # Rewriting Title for new Chats

@@ -5,14 +5,15 @@ const SelectedTools = (
 
 ) => {
     const decode_tools = {
-      1: "🌐 Web Search",
-        2: "📎 Attach File",
-        3: "📖 Research",
-        4: "🤔 Deep Thinking",
-        5: "🎤 Voice Input",
+        1: "🌐 Web Search",
+        2: "📄 Your PDFs",
+        3: "🎤 Voice Input",
     }
-    const {chat_session, selectedTools, setSelectedTools} = useTools();
+    const {chat_session, selectedTools, setSelectedTools, setSelectedPdfIds} = useTools();
     function removeTool(tool) {
+        if (tool === 2) {
+            setSelectedPdfIds([]);
+        }
         setSelectedTools(prev => 
             {return prev.filter(t => t !== tool);}
         );

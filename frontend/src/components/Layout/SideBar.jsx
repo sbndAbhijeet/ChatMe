@@ -8,6 +8,7 @@ import {
   MessageSquarePlus,
   NotebookPen,
   Settings,
+  Files,
   ChevronDown,
   ChevronRight,
   UserCircle2,
@@ -25,6 +26,7 @@ const Sidebar = ({ type }) => {
   const chatPage = type === "chat";
   const blogPage = type === "blog";
   const notePage = type === "note";
+  const pdfPage = type === "pdf";
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
@@ -124,6 +126,14 @@ const Sidebar = ({ type }) => {
       >
         <span className="p-3"><NotebookPen size={18} /></span>
         {!isCollapsed && <span className="ml-2">Blogs</span>}
+      </Link>
+
+      <Link
+        to="/pdfs"
+        className={`mx-2 mb-4 rounded-md hover:bg-[#618985]/30 flex items-center ${location.pathname.startsWith('/pdfs') ? 'bg-[#618985]/50' : ''}`}
+      >
+        <span className="p-3"><Files size={18} /></span>
+        {!isCollapsed && <span className="ml-2">Your PDFs</span>}
       </Link>
 
       {/* Recent Chats Section */}

@@ -1,5 +1,4 @@
-from typing_extensions import TypedDict
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypedDict
 from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from langgraph.graph import StateGraph, START, END
@@ -10,6 +9,7 @@ from openai import OpenAI
 from src.web_search.search import clean_web_context
 import os
 from functools import lru_cache
+from src.rag.service import build_pdf_context
 
 
 load_dotenv()
@@ -48,6 +48,7 @@ class State(TypedDict):
     messages: Annotated[list, add_messages] #stores conversation history 
     tools_queue: list[int] 
     tool_results: list[dict]
+    selected_document_ids: list[str]
 
 def _last_user_message(state: State) -> str:
     """
@@ -89,7 +90,7 @@ def web_tool(state: State):
         query = _last_user_message(state)
         try:
             web_data = clean_web_context(query)
-            print(f'Weather data: {web_data}')
+            print(f'Web data: {web_data}')
             new_tool_results.append({
                 "role": "system",
                 "content": f"Web search result:\n{web_data}"
@@ -106,8 +107,58 @@ def web_tool(state: State):
     }
 
 
+# tool id: 2
+def pdf_tool(state: State, config):
+    """
+    Processes ONE PDF/RAG tool from the queue.
+    - If 2, retrieves only from the selected PDF document ids.
+    - Appends result as a system message.
+    - Pops the tool_id AFTER processing.
+    - Returns updated state.
+    """
+    state.setdefault("tools_queue", [])
+    state.setdefault("tool_results", [])
+    state.setdefault("selected_document_ids", [])
+
+    if not state.get("tools_queue"):
+        return state
+
+    tool_id = state["tools_queue"][0]
+    new_tool_results = state.get("tool_results", []).copy()
+
+    if tool_id == 2:
+        query = _last_user_message(state)
+        selected_document_ids = state.get("selected_document_ids", [])
+        try:
+            context = build_pdf_context(
+                query,
+                selected_document_ids=selected_document_ids,
+                qdrant_client=config["configurable"].get("qdrant_client"),
+                qdrant_collection=config["configurable"].get("qdrant_collection"),
+                api_key=config["configurable"].get("api_key"),
+                top_k=5,
+            )
+            if context:
+                new_tool_results.append({
+                    "role": "system",
+                    "content": context,
+                })
+        except Exception as e:
+            print("PDF retrieval failed:", e)
+
+    new_queue = state["tools_queue"][1:]
+
+    return {
+        "tools_queue": new_queue,
+        "tool_results": new_tool_results,
+        "selected_document_ids": state.get("selected_document_ids", []),
+    }
+
+
+
+
 # Decider (conditional edge)
-def route_tools(state: State) -> Literal['web_tool', 'chatbot']:
+def route_tools(state: State) -> Literal['web_tool', 'pdf_tool', 'chatbot']:
     state.setdefault("tools_queue", [])
     print(state["tools_queue"])
     if state['tools_queue']:
@@ -116,6 +167,8 @@ def route_tools(state: State) -> Literal['web_tool', 'chatbot']:
         next_tool = state["tools_queue"][0]
         if next_tool == 1:
             return 'web_tool'
+        if next_tool == 2:
+            return 'pdf_tool'
         # add other tools here
 
     # if no tools in queue
@@ -178,6 +231,7 @@ def route_tools_node(state: State):
 graph_builder = StateGraph(State)
 # builind nodes
 graph_builder.add_node('web_tool', web_tool)
+graph_builder.add_node('pdf_tool', pdf_tool)
 graph_builder.add_node("chatbot", chatbot) # final llm node
 graph_builder.add_node("route_tools", route_tools_node)
 
@@ -186,10 +240,11 @@ graph_builder.add_edge(START, "route_tools")
 graph_builder.add_conditional_edges(
     "route_tools",
     route_tools,
-    {"web_tool": "web_tool", "chatbot": "chatbot"}
+    {"web_tool": "web_tool", "pdf_tool": "pdf_tool", "chatbot": "chatbot"}
 )
 
 graph_builder.add_edge("web_tool", "route_tools")  # loop back
+graph_builder.add_edge("pdf_tool", "route_tools")  # loop back
 graph_builder.add_edge("chatbot", END)
 
 
@@ -210,13 +265,15 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None):
+async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_client=None, qdrant_collection: str | None = None):
     config = {
         "configurable": {
             "thread_id": doc_id,
             "graph_version": GRAPH_VERSION,
             "model": model,
             "api_key": api_key,
+            "qdrant_client": qdrant_client,
+            "qdrant_collection": qdrant_collection,
         }
     }
 
@@ -236,6 +293,7 @@ async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model:
             }],
             "tools_queue": tools.copy(),
             "tool_results": [],
+            "selected_document_ids": selected_document_ids or [],
         }
         response = graph_with_cp.invoke(input_state, config)
 

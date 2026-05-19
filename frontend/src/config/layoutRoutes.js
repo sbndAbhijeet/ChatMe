@@ -14,6 +14,13 @@ export const layoutRoutes = [
     type: "blog"
   },
   {
+    pattern: "/pdfs",
+    sidebar: true,
+    header: false,
+    footer: false,
+    type: "pdf"
+  },
+  {
     pattern: "/create-blog",
     sidebar: true,
     header: false,
