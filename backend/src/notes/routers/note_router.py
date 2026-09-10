@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Request, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from bson import ObjectId
 
-from src.auth.dependencies import get_current_user
-from src.notes.schemas.notes import NoteModel, NoteTitle, NoteContent
-from src.notes.dal.note_dal import NoteDAL
+from ...auth.dependencies import get_current_user
+from ..schemas.notes import NoteModel, NoteTitle, NoteContent
+from ..dal.note_dal import NoteDAL
 
 from typing import Optional
 import datetime

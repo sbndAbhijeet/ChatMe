@@ -1,0 +1,3 @@
+generate_title -> openai sdk for openrouter
+chatbot -> llm invoke via openai sdk on openrouter
+web search -> tavily sdk via openrouter

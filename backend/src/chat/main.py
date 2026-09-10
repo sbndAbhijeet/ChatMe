@@ -5,11 +5,11 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.mongodb import MongoDBSaver
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-from openai import OpenAI
-from src.web_search.search import clean_web_context
+from openai import OpenAI, AsyncOpenAI
+from ..web_search.search import clean_web_context
 import os
 from functools import lru_cache
-from src.rag.service import build_pdf_context
+from ..rag.service import build_pdf_context
 
 
 load_dotenv()
@@ -38,8 +38,8 @@ DB_URI = os.getenv("MONOGB_URI")
 COLLECTION_NAME = "luminchat_checkpointer"
 MAX_MESSAGES = 50
 
-def get_openai_client(api_key: str | None = None):
-    return OpenAI(
+async def get_openai_client(api_key: str | None = None):
+    return AsyncOpenAI(
         api_key=_resolve_api_key(api_key),
         base_url="https://openrouter.ai/api/v1"
     )
@@ -106,7 +106,6 @@ def web_tool(state: State):
         "tool_results": new_tool_results
     }
 
-
 # tool id: 2
 def pdf_tool(state: State, config):
     """
@@ -133,8 +132,7 @@ def pdf_tool(state: State, config):
             context = build_pdf_context(
                 query,
                 selected_document_ids=selected_document_ids,
-                qdrant_client=config["configurable"].get("qdrant_client"),
-                qdrant_collection=config["configurable"].get("qdrant_collection"),
+                qdrant_dal=config["configurable"].get("qdrant_dal"),
                 api_key=config["configurable"].get("api_key"),
                 top_k=5,
             )
@@ -153,8 +151,6 @@ def pdf_tool(state: State, config):
         "tool_results": new_tool_results,
         "selected_document_ids": state.get("selected_document_ids", []),
     }
-
-
 
 
 # Decider (conditional edge)
@@ -211,15 +207,21 @@ async def generate_title(user: str, api_key: str | None = None):
     Response: Side Hustle Ideas at Home
     """
 
-    client = get_openai_client(api_key)
-    response = client.chat.completions.create(
-        model="openai/gpt-oss-20b:free",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user}
-        ]
-    )
-    print("inside generate title")
+    client = await get_openai_client(api_key)
+    try:
+        response = await client.chat.completions.create(
+            model="openai/gpt-oss-20b:free",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user}
+            ]
+        )
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        print(f"Failed to generate title: {e}")
+        # Return a fallback title so the app doesn't break
+        return "New Chat"
     # print(response.choices[0].message.content)
 
     return response.choices[0].message.content
@@ -265,15 +267,14 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_client=None, qdrant_collection: str | None = None):
+async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None):
     config = {
         "configurable": {
             "thread_id": doc_id,
             "graph_version": GRAPH_VERSION,
             "model": model,
             "api_key": api_key,
-            "qdrant_client": qdrant_client,
-            "qdrant_collection": qdrant_collection,
+            "qdrant_dal": qdrant_dal,
         }
     }
 
@@ -306,5 +307,8 @@ async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model:
 
 # Testing
 if __name__ == "__main__":
+    import asyncio
     user_message = """You are Tonny Robbins and motivate me in dsa and how to improve coding skills. in his way assume i am very bad at dsa even though i am ok at basic, i am unable to make solution, also you know i talked about my coding problem solving problem with you many times keep that in mind and tell me solution"""
-    generate_title(user_message)
+    # pyrefly: ignore [unused-coroutine]
+    response = asyncio.run(generate_title(user_message))
+    print(response)

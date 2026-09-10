@@ -10,15 +10,14 @@ load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-
+from langchain_huggingface import HuggingFaceEmbeddings
 from qdrant_client import models
 
-from .qdrant_client import upsert_points, ensure_collection
+from .dal import QdrantDAL
 
 CHUNK_SIZE = 900
 CHUNK_OVERLAP = 150
-EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+EMBED_MODEL = os.getenv("EMBED_MODEL")
 
 
 def sha256_of_file(path: Path) -> str:
@@ -29,24 +28,21 @@ def sha256_of_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def process_pdf_and_upsert(qdrant_client, collection_name: str, file_path: Path, document_id: str, user_id: str, pdf_hash: str):
+def process_pdf_and_upsert(qdrant_dal: QdrantDAL, file_path: Path, document_id: str, user_id: str, pdf_hash: str):
     # load
     loader = PyPDFLoader(str(file_path))
     docs = loader.load()
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     chunks = splitter.split_documents(docs)
-
-    embedder = OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
-    )
     texts = [c.page_content for c in chunks]
+
+    embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     vectors = embedder.embed_documents(texts)
 
     # ensure collection with correct vector size
     if vectors:
-        ensure_collection(qdrant_client, collection_name, vector_size=len(vectors[0]))
+        qdrant_dal.ensure_collection(vector_size=len(vectors[0]))
 
     points = []
     for idx, (chunk, vector) in enumerate(zip(chunks, vectors)):
@@ -65,6 +61,6 @@ def process_pdf_and_upsert(qdrant_client, collection_name: str, file_path: Path,
         points.append(models.PointStruct(id=point_id, vector=vector, payload=payload))
 
     if points:
-        upsert_points(qdrant_client, collection_name, points)
+        qdrant_dal.upsert_points(points)
 
     return len(points)

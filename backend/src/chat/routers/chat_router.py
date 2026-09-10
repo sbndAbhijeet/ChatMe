@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from bson import ObjectId
 from pydantic import BaseModel
 
-from src.auth.dependencies import get_current_user
+from ...auth.dependencies import get_current_user
 
 from ..main import get_ai_response, generate_title
 import uvicorn
@@ -84,11 +84,10 @@ async def process_save_responses(
     
     is_new = await req.app.state.chatbot_dal.is_new_thread(object_id, user_id)
 
-    # pass selected document ids and qdrant client/collection for RAG retrieval
-    q_client = req.app.state.qdrant_client
-    q_collection = req.app.state.qdrant_collection
+    # pass selected document ids and qdrant DAL for RAG retrieval
+    qdrant_dal = req.app.state.qdrant_dal
 
-    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_client=q_client, qdrant_collection=q_collection)
+    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_dal=qdrant_dal)
 
 
     await req.app.state.chatbot_dal.save_sender_response(object_id, "user", user_input.message, user_id)

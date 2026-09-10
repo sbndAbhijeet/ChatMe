@@ -3,21 +3,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import AsyncMongoClient
 
-from src.auth.router import router as auth_router
-from src.users.routes.user import router as user_router
-from src.chat.routers.chat_router import router as chat_router
-from src.notes.routers.note_router import router as notes_router
-from src.notes.routers.blog_router import router as blog_router
+from ..auth.router import router as auth_router
+from ..users.routes.user import router as user_router
+from ..chat.routers.chat_router import router as chat_router
+from ..notes.routers.note_router import router as notes_router
+from ..notes.routers.blog_router import router as blog_router
 
 
-from src.notes.dal.note_dal import NoteDAL
-from src.users.dal.user import UserDAL
-from src.notes.dal.blog_dal import BlogDAL
-from src.notes.dal.service import CollectionService
-from src.chat.dal import ChatBot
-from src.rag.dal import DocumentDAL
-from src.rag.qdrant_client import init_qdrant, ensure_collection
-from src.rag.router import router as rag_router
+from ..notes.dal.note_dal import NoteDAL
+from ..users.dal.user import UserDAL
+from ..notes.dal.blog_dal import BlogDAL
+from ..notes.dal.service import CollectionService
+from ..chat.dal import ChatBot
+from ..rag.dal import DocumentDAL, QdrantDAL
+from ..rag.qdrant_client import init_qdrant
+from ..rag.router import router as rag_router
 
 from dotenv import load_dotenv
 import os
@@ -25,10 +25,11 @@ import os
 load_dotenv()
 
 # imports from env
-CHAT_COLLECTION = os.getenv("CHAT_COLLECTION")
-BLOG_COLLECTION = os.getenv("BLOG_COLLECTION")
-NOTE_COLLECTION = os.getenv("NOTE_COLLECTION")
-USER_COLLECTION = os.getenv("USER_COLLECTION")
+CHAT_DB = os.getenv("CHAT_DB")
+BLOG_DB = os.getenv("BLOG_DB")
+NOTE_DB = os.getenv("NOTE_DB")
+USER_DB = os.getenv("USER_DB")
+DOC_DB = os.getenv("DOCUMENTS_DB")
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 DB = os.getenv("DB_NAME")
@@ -38,7 +39,8 @@ QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "documents_collection")
 
-collections = [CHAT_COLLECTION,BLOG_COLLECTION,NOTE_COLLECTION, USER_COLLECTION]
+collections = [CHAT_DB, BLOG_DB, NOTE_DB, USER_DB, DOC_DB]
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = None
@@ -51,28 +53,24 @@ async def lifespan(app: FastAPI):
             if collection not in existing_collections:
                 await db.create_collection(collection)
 
-        chatbot_col = db[CHAT_COLLECTION]
-        blog_col = db[BLOG_COLLECTION]
-        note_col = db[NOTE_COLLECTION]
-        user_col = db[USER_COLLECTION]
+        chatbot_col = db[CHAT_DB]
+        blog_col = db[BLOG_DB]
+        note_col = db[NOTE_DB]
+        user_col = db[USER_DB]
+        doc_col = db[DOC_DB]
 
         chatbot_dal = ChatBot(chatbot_col)
         blog_dal = BlogDAL(blog_col)
         note_dal = NoteDAL(note_col)
         user_dal = UserDAL(user_col)
-        # documents collection for uploaded PDFs
-        documents_collection_name = os.getenv("DOCUMENTS_COLLECTION", "documents")
-        if documents_collection_name not in existing_collections:
-            await db.create_collection(documents_collection_name)
-
-        documents_col = db[documents_collection_name]
-        document_dal = DocumentDAL(documents_col)
+        doc_dal = DocumentDAL(doc_col)
 
         # initialize qdrant client (local or remote)
         q_client = init_qdrant(path=QDRANT_PATH, url=QDRANT_URL, api_key=QDRANT_API_KEY)
+        qdrant_dal = QdrantDAL(q_client, QDRANT_COLLECTION)
         # ensure collection exists
         try:
-            ensure_collection(q_client, QDRANT_COLLECTION)
+            qdrant_dal.ensure_collection()
         except Exception:
             # best-effort, will be recreated during first upsert
             pass
@@ -88,9 +86,8 @@ async def lifespan(app: FastAPI):
         app.state.note_dal = note_dal
         app.state.user_dal = user_dal
         app.state.collection_service = collection_service
-        app.state.document_dal = document_dal
-        app.state.qdrant_client = q_client
-        app.state.qdrant_collection = QDRANT_COLLECTION
+        app.state.document_dal = doc_dal
+        app.state.qdrant_dal = qdrant_dal
 
         yield
 
@@ -106,7 +103,12 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:3000"], # React app origin
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]

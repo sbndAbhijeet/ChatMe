@@ -88,7 +88,7 @@ class ChatBot:
         return str(response.inserted_id)
     
     async def get_chat_history(self, user_id: str, session=None):
-        cursor = await self._chatbot_collection.aggregate(
+        cursor = self._chatbot_collection.aggregate(
             [
                 {
                     "$match": {"user_id": user_id}

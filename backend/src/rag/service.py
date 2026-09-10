@@ -3,23 +3,22 @@ from __future__ import annotations
 from typing import Iterable
 import os
 
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.rag.qdrant_client import query_vectors
+from .dal import QdrantDAL
 
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+EMBED_MODEL = os.getenv("EMBED_MODEL")
 
 def build_pdf_context(
     query: str,
     *,
     selected_document_ids: list[str] | None,
-    qdrant_client,
-    qdrant_collection: str | None,
+    qdrant_dal: QdrantDAL,
     api_key: str | None = None,
     top_k: int = 5,
 ) -> str:
@@ -35,17 +34,12 @@ def build_pdf_context(
     if not query.strip():
         return ""
 
-    if not selected_document_ids or not qdrant_client or not qdrant_collection:
+    if not selected_document_ids or not qdrant_dal:
         return ""
 
-    embedder = OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
-    )
+    embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     q_vector = embedder.embed_query(query)
-    hits = query_vectors(
-        qdrant_client,
-        qdrant_collection,
+    hits = qdrant_dal.query_vectors(
         q_vector,
         selected_document_ids=selected_document_ids,
         top_k=top_k,

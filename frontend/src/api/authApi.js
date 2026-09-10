@@ -35,3 +35,37 @@ export async function loginUser(payload) {
     };
   }
 }
+
+export async function logoutUser() {
+  try {
+    const res = await apiClient.post("/auth/logout");
+    return {
+      status: true,
+      data: res.data,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      status: false,
+      data: null,
+      error: error?.response?.data?.detail || "Logout failed",
+    };
+  }
+}
+
+export async function refreshToken() {
+  try {
+    const res = await apiClient.post("/auth/refresh");
+    return {
+      status: true,
+      data: res.data,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      status: false,
+      data: null,
+      error: error?.response?.data?.detail || "Refresh failed",
+    };
+  }
+}

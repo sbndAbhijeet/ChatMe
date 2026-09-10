@@ -4,19 +4,21 @@ from pathlib import Path
 import asyncio
 import os
 import uuid
+from openai import OpenAI
 from datetime import datetime
 
-from src.auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user
 from .dal import DocumentDAL
 from .processor import process_pdf_and_upsert, sha256_of_file
-from .qdrant_client import delete_points_by_filter
+from .dal import QdrantDAL
 from qdrant_client import models
+
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])
 
 STORAGE_DIR = Path(__file__).resolve().parents[2] / "storage" / "pdfs"
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+EMBED_MODEL = os.getenv("EMBED_MODEL")
 
 
 @router.post("/upload")
@@ -27,8 +29,7 @@ async def upload_pdf(
 ):
     app = request.app
     doc_dal: DocumentDAL = app.state.document_dal
-    qdrant_client = app.state.qdrant_client
-    collection_name = app.state.qdrant_collection
+    qdrant_dal: QdrantDAL = app.state.qdrant_dal
 
     # save file temporarily
     filename = f"{uuid.uuid4().hex}_{file.filename}"
@@ -55,7 +56,7 @@ async def upload_pdf(
 
     # process and embed synchronously using thread to avoid blocking event loop
     def _proc():
-        return process_pdf_and_upsert(qdrant_client, collection_name, out_path, str(doc["_id"]), user_id or "", pdf_hash)
+        return process_pdf_and_upsert(qdrant_dal, out_path, str(doc["_id"]), user_id or "", pdf_hash)
 
     inserted_chunks = await asyncio.to_thread(_proc)
 
@@ -81,8 +82,7 @@ async def delete_document(
 ):
     app = request.app
     doc_dal: DocumentDAL = app.state.document_dal
-    qdrant_client = app.state.qdrant_client
-    collection_name = app.state.qdrant_collection
+    qdrant_dal: QdrantDAL = app.state.qdrant_dal
 
     doc = await doc_dal.get_document(document_id)
     if not doc:
@@ -92,13 +92,7 @@ async def delete_document(
 
     # delete vectors (blocking qdrant call)
     def _del():
-        flt = models.Filter(
-            must=[
-                models.FieldCondition(key="user_id", match=models.MatchValue(value=user_id)),
-                models.FieldCondition(key="document_id", match=models.MatchValue(value=document_id)),
-            ]
-        )
-        delete_points_by_filter(qdrant_client, collection_name, flt)
+        qdrant_dal.delete_points_by_document(document_id, user_id)
 
     await asyncio.to_thread(_del)
 
@@ -121,18 +115,16 @@ async def query_documents(
     """payload = {"query": str, "selected_document_ids": [ids], "top_k": int}
     """
     app = request.app
-    qdrant_client = app.state.qdrant_client
-    collection_name = app.state.qdrant_collection
+    qdrant_dal: QdrantDAL = app.state.qdrant_dal
     query = payload.get("query")
     selected = payload.get("selected_document_ids")
     top_k = int(payload.get("top_k", 5))
     if not query:
         raise HTTPException(400, "query required")
 
-    # embed query in thread
-    from langchain.embeddings import OpenAIEmbeddings
-    embedder = OpenAIEmbeddings(model=EMBEDDING_MODEL, openai_api_key=os.getenv("OPENAI_API_KEY"))
-    q_vector = await asyncio.to_thread(embedder.embed_query, query)
+    from langchain_huggingface import HuggingFaceEmbeddings
+    embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+    q_vector = embedder.embed_query(query)
 
     # build filter
     from qdrant_client import models
@@ -147,7 +139,7 @@ async def query_documents(
     qfilter = models.Filter(must=query_filter_parts)
 
     def _search():
-        return qdrant_client.search(collection_name=collection_name, query_vector=q_vector, limit=top_k, query_filter=qfilter, with_payload=True)
+        return qdrant_dal.search(query_vector=q_vector, query_filter=qfilter, top_k=top_k)
 
     res = await asyncio.to_thread(_search)
 

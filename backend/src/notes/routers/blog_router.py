@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Request, HTTPException, status
 from pydantic import BaseModel
 
 
-from src.auth.dependencies import get_current_user
+from ...auth.dependencies import get_current_user
 
-from src.notes.dal.blog_dal import BlogDAL, ListCollections
-from src.notes.dal.service import CollectionService
-from src.notes.schemas.blogs import BlogName, BlogNote, RenameCollectionRequest
+from ..dal.blog_dal import BlogDAL, ListCollections
+from ..dal.service import CollectionService
+from ..schemas.blogs import BlogName, BlogNote, RenameCollectionRequest
 
 from typing import Optional
 import datetime

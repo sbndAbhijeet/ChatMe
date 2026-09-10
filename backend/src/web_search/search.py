@@ -42,6 +42,8 @@ def get_context(res):
     
     return context
 
+
+# just for testing
 def process_query(query, res):
     context = get_context(res)
     # Injest in AI

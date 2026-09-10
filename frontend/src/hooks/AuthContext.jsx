@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { loginUser, registerUser } from "../api/authApi";
+import { loginUser, registerUser, logoutUser } from "../api/authApi";
 
 const AuthContext = createContext(null);
 
@@ -53,7 +53,8 @@ export const AuthProvider = ({ children }) => {
     return { status: false, error: res.error || "Registration failed" };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await logoutUser();
     setAuthToken("");
   };
 
