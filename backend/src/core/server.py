@@ -52,6 +52,9 @@ required_settings = {
 missing_settings = [name for name, value in required_settings.items() if not value]
 if missing_settings:
     raise RuntimeError(f"Missing backend configuration: {', '.join(missing_settings)}")
+if DEBUG is None or DEBUG.lower() not in ("true", "1"):
+    if not (QDRANT_URL or QDRANT_PATH):
+        raise RuntimeError("Production requires QDRANT_URL or a QDRANT_PATH on a persistent volume")
 
 collections = [CHAT_DB, BLOG_DB, NOTE_DB, USER_DB, DOC_DB]
 

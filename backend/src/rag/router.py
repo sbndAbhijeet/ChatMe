@@ -16,7 +16,7 @@ from qdrant_client import models
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])
 
-STORAGE_DIR = Path(__file__).resolve().parents[2] / "storage" / "pdfs"
+STORAGE_DIR = Path(os.getenv("PDF_STORAGE_DIR") or Path(__file__).resolve().parents[2] / "storage" / "pdfs")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 EMBED_MODEL = os.getenv("EMBED_MODEL")
 
@@ -32,35 +32,39 @@ async def upload_pdf(
     qdrant_dal: QdrantDAL = app.state.qdrant_dal
 
     # save file temporarily
-    filename = f"{uuid.uuid4().hex}_{file.filename}"
+    filename = f"{uuid.uuid4().hex}.pdf"
     out_path = STORAGE_DIR / filename
-    content = await file.read()
-    out_path.write_bytes(content)
+    doc = None
+    try:
+        content = await file.read()
+        out_path.write_bytes(content)
+        pdf_hash = sha256_of_file(out_path)
+        existing = await doc_dal.get_by_hash(pdf_hash, user_id=user_id)
+        if existing:
+            return JSONResponse({"status": "exists", "document": existing})
 
-    pdf_hash = sha256_of_file(out_path)
-    existing = await doc_dal.get_by_hash(pdf_hash, user_id=user_id)
-    if existing:
-        # cleanup saved duplicate
+        metadata = {
+            "user_id": user_id,
+            "filename": file.filename,
+            "stored_filename": filename,
+            "pdf_hash": pdf_hash,
+            "uploaded_at": datetime.utcnow(),
+        }
+        doc = await doc_dal.create_document(metadata)
+
+        # The PDF is retained only until embedding completes.
+        def _proc():
+            return process_pdf_and_upsert(qdrant_dal, out_path, str(doc["_id"]), user_id, pdf_hash)
+
+        inserted_chunks = await asyncio.to_thread(_proc)
+        return {"status": "ok", "document": doc, "chunks_indexed": inserted_chunks}
+    except Exception:
+        if doc:
+            await doc_dal.delete_document(str(doc["_id"]))
+        raise
+    finally:
+        # Search uses Qdrant, so the original PDF need not occupy local disk.
         out_path.unlink(missing_ok=True)
-        return JSONResponse({"status": "exists", "document": existing})
-
-    metadata = {
-        "user_id": user_id,
-        "filename": file.filename,
-        "stored_filename": filename,
-        "pdf_hash": pdf_hash,
-        "uploaded_at": datetime.utcnow(),
-    }
-
-    doc = await doc_dal.create_document(metadata)
-
-    # process and embed synchronously using thread to avoid blocking event loop
-    def _proc():
-        return process_pdf_and_upsert(qdrant_dal, out_path, str(doc["_id"]), user_id or "", pdf_hash)
-
-    inserted_chunks = await asyncio.to_thread(_proc)
-
-    return {"status": "ok", "document": doc, "chunks_indexed": inserted_chunks}
 
 
 @router.get("/documents")
@@ -99,8 +103,8 @@ async def delete_document(
     # delete metadata
     deleted = await doc_dal.delete_document(document_id)
     # delete stored file
-    stored = Path(__file__).resolve().parents[2] / "storage" / "pdfs" / doc.get("stored_filename", "")
-    if stored.exists():
+    if doc.get("stored_filename"):
+        stored = STORAGE_DIR / doc["stored_filename"]
         stored.unlink(missing_ok=True)
 
     return {"deleted": deleted}
