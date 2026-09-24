@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import {useParams, useNavigate, useLocation}  from "react-router-dom";
-import ReactMarkdown from 'react-markdown';
 import { Save } from "lucide-react";
-import remarkGfm from 'remark-gfm';
+import NoteMarkdown from '../../components/NoteMarkdown';
 
 import logo from "../../assets/non-bg-logo.png";
 
@@ -278,9 +277,9 @@ function ChatBot() {
                   </div>
                 ) : (
                   <div>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <NoteMarkdown>
                       {isTyping && isLast && isBot ? displayedBotMessage : chat.message}
-                    </ReactMarkdown>
+                    </NoteMarkdown>
                     {/* Small save icon */}
                     {isBot && (
                       <button
