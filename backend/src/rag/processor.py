@@ -37,6 +37,9 @@ def process_pdf_and_upsert(qdrant_dal: QdrantDAL, file_path: Path, document_id: 
     chunks = splitter.split_documents(docs)
     texts = [c.page_content for c in chunks]
 
+    if not texts:
+        return 0
+
     embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     vectors = embedder.embed_documents(texts)
 
