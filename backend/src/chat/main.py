@@ -132,6 +132,7 @@ def pdf_tool(state: State, config):
             context = build_pdf_context(
                 query,
                 selected_document_ids=selected_document_ids,
+                user_id=config["configurable"]["user_id"],
                 qdrant_dal=config["configurable"].get("qdrant_dal"),
                 api_key=config["configurable"].get("api_key"),
                 top_k=5,
@@ -267,7 +268,7 @@ def checkpointer_window(saver, config):
 #     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
 
 # AI Response
-async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None):
+async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None, user_id: str | None = None):
     config = {
         "configurable": {
             "thread_id": doc_id,
@@ -275,6 +276,7 @@ async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model:
             "model": model,
             "api_key": api_key,
             "qdrant_dal": qdrant_dal,
+            "user_id": user_id,
         }
     }
 
