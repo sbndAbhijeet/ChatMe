@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from pymongo.errors import DuplicateKeyError
 from ..users.models.user import UserCreate, UserLogin
 from .utils import hash_password, verify_password, create_access_token, create_refresh_token, DEBUG
 
@@ -14,7 +15,10 @@ async def register(user: UserCreate, request: Request):
 
     hashed = hash_password(user.password)
 
-    await user_dal.create_user(email=user.email, password=hashed)
+    try:
+        await user_dal.create_user(email=user.email, password=hashed)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists") from None
 
     return {"msg": "User created"}
 

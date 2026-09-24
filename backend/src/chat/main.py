@@ -10,6 +10,7 @@ from ..web_search.search import clean_web_context
 import os
 from functools import lru_cache
 from ..rag.service import build_pdf_context
+import asyncio
 
 
 load_dotenv()
@@ -264,11 +265,22 @@ def checkpointer_window(saver, config):
         saver.save_checkpoint(config, state)
 
 
-# async def get_ai_response(user_input: str, doc_id: str):
-#     return await asyncio.to_thread(_get_ai_response_sync, user_input, doc_id)
-
 # AI Response
 async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None, user_id: str | None = None):
+    return await asyncio.to_thread(
+        _get_ai_response_sync,
+        user_input,
+        doc_id,
+        tools,
+        model,
+        api_key,
+        selected_document_ids,
+        qdrant_dal,
+        user_id,
+    )
+
+
+def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None, selected_document_ids: list | None, qdrant_dal, user_id: str | None):
     config = {
         "configurable": {
             "thread_id": doc_id,
