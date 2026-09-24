@@ -91,12 +91,7 @@ async def lifespan(app: FastAPI):
         # initialize qdrant client (local or remote)
         q_client = init_qdrant(path=QDRANT_PATH, url=QDRANT_URL, api_key=QDRANT_API_KEY)
         qdrant_dal = QdrantDAL(q_client, QDRANT_COLLECTION)
-        # ensure collection exists
-        try:
-            qdrant_dal.ensure_collection()
-        except Exception:
-            # best-effort, will be recreated during first upsert
-            pass
+        # The first PDF upload creates the collection using its embedding dimension.
 
         collection_service = CollectionService(
             blog_dal=blog_dal,
