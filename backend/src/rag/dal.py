@@ -83,17 +83,18 @@ class QdrantDAL:
         )
         self.delete_points_by_filter(flt)
 
-    def query_vectors(self, query_vector: List[float], selected_document_ids: Optional[List[str]] = None, top_k: int = 5):
-        qfilter = None
-        if selected_document_ids:
-            qfilter = models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key="document_id",
-                        match=models.MatchAny(any=selected_document_ids),
-                    )
-                ]
-            )
+    def query_vectors(self, query_vector: List[float], user_id: str, selected_document_ids: List[str], top_k: int = 5):
+        if not user_id or not selected_document_ids:
+            return []
+        qfilter = models.Filter(
+            must=[
+                models.FieldCondition(key="user_id", match=models.MatchValue(value=user_id)),
+                models.FieldCondition(
+                    key="document_id",
+                    match=models.MatchAny(any=selected_document_ids),
+                ),
+            ]
+        )
 
         result = self.client.query_points(
             collection_name=self.collection_name,
