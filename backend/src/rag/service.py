@@ -18,6 +18,7 @@ def build_pdf_context(
     query: str,
     *,
     selected_document_ids: list[str] | None,
+    user_id: str,
     qdrant_dal: QdrantDAL,
     api_key: str | None = None,
     top_k: int = 5,
@@ -34,13 +35,14 @@ def build_pdf_context(
     if not query.strip():
         return ""
 
-    if not selected_document_ids or not qdrant_dal:
+    if not selected_document_ids or not user_id or not qdrant_dal:
         return ""
 
     embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     q_vector = embedder.embed_query(query)
     hits = qdrant_dal.query_vectors(
         q_vector,
+        user_id=user_id,
         selected_document_ids=selected_document_ids,
         top_k=top_k,
     )
