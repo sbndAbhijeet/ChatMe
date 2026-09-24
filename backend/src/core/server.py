@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+import asyncio
+import logging
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import AsyncMongoClient
 
@@ -57,6 +59,7 @@ if DEBUG is None or DEBUG.lower() not in ("true", "1"):
         raise RuntimeError("Production requires QDRANT_URL or a QDRANT_PATH on a persistent volume")
 
 collections = [CHAT_DB, BLOG_DB, NOTE_DB, USER_DB, DOC_DB]
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -112,6 +115,7 @@ async def lifespan(app: FastAPI):
         app.state.collection_service = collection_service
         app.state.document_dal = doc_dal
         app.state.qdrant_dal = qdrant_dal
+        app.state.mongo_client = client
 
         yield
 
@@ -124,6 +128,22 @@ async def lifespan(app: FastAPI):
     
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/health/live", include_in_schema=False)
+def health_live():
+    return {"status": "ok"}
+
+
+@app.get("/health/ready", include_in_schema=False)
+async def health_ready():
+    try:
+        await app.state.mongo_client.admin.command("ping")
+        await asyncio.to_thread(app.state.qdrant_dal.client.get_collections)
+    except Exception:
+        logger.exception("Readiness check failed")
+        raise HTTPException(status_code=503, detail="Dependency unavailable") from None
+    return {"status": "ok"}
 
 app.add_middleware(
     CORSMiddleware,
