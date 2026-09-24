@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getHistory, postMessage, renameTitle, create_new_chat, deleteChat, getOngoingChat } from "../api/chatDocs";
+import { getHistory, streamMessage, renameTitle, create_new_chat, deleteChat, getOngoingChat } from "../api/chatDocs";
 import { useAuth } from "./AuthContext";
 
 export const ChatHistoryContext = createContext(null);
@@ -43,7 +43,7 @@ export const ChatHistoryProvider = (props) => {
     //     )
     // }
 
-    const processUserInput = async (docId, msg, tools, model, selectedDocumentIds = [], selectedNoteIds = []) => {
+    const processUserInput = async (docId, msg, tools, model, selectedDocumentIds = [], selectedNoteIds = [], onToken = () => {}) => {
         // Add the user's message to history immediately
         // setHistory(prev =>
         //     prev.map(chat =>
@@ -53,8 +53,7 @@ export const ChatHistoryProvider = (props) => {
         //     )
         // );
 
-        const { data, error } = await postMessage(docId, msg, tools, model, selectedDocumentIds, selectedNoteIds);
-        if (error) throw new Error(error.response?.data?.detail || "Sorry, I couldn't process that. Please try again!");
+        return streamMessage(docId, msg, tools, model, selectedDocumentIds, selectedNoteIds, onToken);
 
         // Add AI reply when it arrives
         // setHistory(prev =>
@@ -64,7 +63,6 @@ export const ChatHistoryProvider = (props) => {
         //             : chat
         //     )
         // );
-        return data.reply;
     };
 
 

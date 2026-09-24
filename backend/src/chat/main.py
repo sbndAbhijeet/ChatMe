@@ -319,6 +319,10 @@ async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model:
 
 
 def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None, selected_document_ids: list | None, qdrant_dal, user_id: str | None, note_context: str):
+    return _run_chat(user_input, doc_id, tools, model, api_key, selected_document_ids, qdrant_dal, user_id, note_context)
+
+
+def _run_chat(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None, selected_document_ids: list | None, qdrant_dal, user_id: str | None, note_context: str, on_token=None):
     config = {
         "configurable": {
             "thread_id": doc_id,
@@ -342,11 +346,41 @@ def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model:
             "tool_results": [{"role": "system", "content": note_context}] if note_context else [],
             "selected_document_ids": selected_document_ids or [],
         }
-        response = graph_with_cp.invoke(input_state, config)
-
-        ai_message= response["messages"][-1].content
+        if on_token is None:
+            response = graph_with_cp.invoke(input_state, config)
+            ai_message = response["messages"][-1].content
+        else:
+            for chunk, metadata in graph_with_cp.stream(input_state, config, stream_mode="messages"):
+                if metadata.get("langgraph_node") == "chatbot" and isinstance(chunk.content, str) and chunk.content:
+                    on_token(chunk.content)
+            ai_message = graph_with_cp.get_state(config).values["messages"][-1].content
     # print(ai_message)
     return ai_message
+
+
+async def stream_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None, user_id: str | None = None, note_context: str = ""):
+    """Yield model tokens from the synchronous checkpointed graph without blocking the event loop."""
+    loop = asyncio.get_running_loop()
+    queue = asyncio.Queue()
+
+    def work():
+        try:
+            result = _run_chat(user_input, doc_id, tools, model, api_key, selected_document_ids, qdrant_dal, user_id, note_context,
+                               lambda token: loop.call_soon_threadsafe(queue.put_nowait, ("token", token)))
+            loop.call_soon_threadsafe(queue.put_nowait, ("done", result))
+        except Exception as exc:
+            loop.call_soon_threadsafe(queue.put_nowait, ("error", str(exc)))
+
+    task = asyncio.create_task(asyncio.to_thread(work))
+    try:
+        while True:
+            event, content = await queue.get()
+            yield event, content
+            if event != "token":
+                break
+    finally:
+        if not task.done():
+            await asyncio.shield(task)
 
 
 # Testing
