@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 
 import * as blogApi from "../api/Blogs/blogApi";
 import { useError } from "./ErrorContext";
-import { useNotes } from "./NoteContext";
 
 export const BlogContext = createContext(null);
 
@@ -58,7 +56,7 @@ export const BlogProvider = (props) => {
 
         if(!res.status){
             showError(res.error)
-            return;
+            return null;
         }
     
         /* Incoming data 
@@ -72,11 +70,7 @@ export const BlogProvider = (props) => {
         };
         
         setBlogs((prev) => [...prev, newBlog])
-        const newNote = {
-            note_id: res.note_id,
-            ...data.note
-        }
-        // setNotes((prev) => [...prev, newNote]);
+        return {blog_id, note_id};
     }
 
     const renameBlog = async (blogId, blogName) => {
