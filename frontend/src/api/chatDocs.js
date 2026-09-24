@@ -29,9 +29,9 @@ export async function create_new_chat(){
     }
 }
 
-export async function postMessage (docId, msg, tools, model, selectedDocumentIds = []) {
+export async function postMessage (docId, msg, tools, model, selectedDocumentIds = [], selectedNoteIds = []) {
     try {
-        const res = await apiClient.post(`/chat/save_response/${String(docId)}`, {message: msg, tools: tools, model: model, selected_document_ids: selectedDocumentIds})
+        const res = await apiClient.post(`/chat/save_response/${String(docId)}`, {message: msg, tools: tools, model: model, selected_document_ids: selectedDocumentIds, selected_note_ids: selectedNoteIds})
         console.log(res.data);
         return {data: res.data, error: null};
     } catch (error){
@@ -56,4 +56,3 @@ export const deleteChat = async (docId) => {
         return {data: null, error: error}
     }
 }
-
