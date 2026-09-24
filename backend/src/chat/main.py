@@ -266,7 +266,7 @@ def checkpointer_window(saver, config):
 
 
 # AI Response
-async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None, user_id: str | None = None):
+async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None = None, selected_document_ids: list | None = None, qdrant_dal=None, user_id: str | None = None, note_context: str = ""):
     return await asyncio.to_thread(
         _get_ai_response_sync,
         user_input,
@@ -277,10 +277,11 @@ async def get_ai_response(user_input: str, doc_id: str, tools: list[str], model:
         selected_document_ids,
         qdrant_dal,
         user_id,
+        note_context,
     )
 
 
-def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None, selected_document_ids: list | None, qdrant_dal, user_id: str | None):
+def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model: str, api_key: str | None, selected_document_ids: list | None, qdrant_dal, user_id: str | None, note_context: str):
     config = {
         "configurable": {
             "thread_id": doc_id,
@@ -307,7 +308,7 @@ def _get_ai_response_sync(user_input: str, doc_id: str, tools: list[str], model:
                 "content": user_input
             }],
             "tools_queue": tools.copy(),
-            "tool_results": [],
+            "tool_results": [{"role": "system", "content": note_context}] if note_context else [],
             "selected_document_ids": selected_document_ids or [],
         }
         response = graph_with_cp.invoke(input_state, config)

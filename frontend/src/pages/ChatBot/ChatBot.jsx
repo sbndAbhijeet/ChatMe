@@ -24,7 +24,7 @@ function ChatBot() {
   const [selectedMessage, setSelectedMessage] = useState("");
   
   const {isTyping, setIsTyping} = useHistory();
-  const {selectedTools, selectedPdfIds, globalModel} = useTools();
+  const {selectedTools, selectedPdfIds, selectedNoteIds, globalModel} = useTools();
 
   const messagesContainerRef = useRef(null);
 
@@ -96,7 +96,7 @@ function ChatBot() {
     try {
       let botResponse;
       try {
-        botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds);
+        botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds, selectedNoteIds);
       } catch (error) {
         botResponse = null;
       }

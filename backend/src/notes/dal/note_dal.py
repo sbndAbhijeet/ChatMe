@@ -47,6 +47,16 @@ class NoteDAL:
         )
 
         return Note.note_doc(res)
+
+    async def get_chat_notes(self, note_ids: list[str], user_id: str):
+        """Return selected notes in request order, scoped to their owner."""
+        ids = [ObjectId(note_id) for note_id in note_ids]
+        cursor = self._note_collection.find(
+            {"_id": {"$in": ids}, "user_id": user_id},
+            {"title": 1, "content": 1},
+        )
+        found = {str(doc["_id"]): doc async for doc in cursor}
+        return [found[note_id] for note_id in note_ids if note_id in found]
     
     # get notes of collection
     async def get_collection_notes(

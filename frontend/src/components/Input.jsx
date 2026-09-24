@@ -27,7 +27,7 @@ const Input = (
 
     const tools = {
       "🌐 Web Search": 1,
-        "📄 Select PDFs to upload": 2,
+        "📎 Attach notes and PDFs": 2,
         "🎤 Voice Input": 3,
     }
 
@@ -76,7 +76,6 @@ const Input = (
         // console.log(val);
         console.log(tool)
       if (tool === 2) {
-        setSelectedTools(prev => prev.includes(tool) ? prev : [...prev, tool]);
         setShowPdfModal(true);
         setToolMenu(false);
         return;
