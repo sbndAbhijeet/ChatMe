@@ -38,6 +38,7 @@ QDRANT_PATH = os.getenv("QDRANT_PATH")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "documents_collection")
+FRONTEND_ORIGINS = [origin.strip() for origin in os.getenv("FRONTEND_ORIGINS", "").split(",") if origin.strip()]
 
 required_settings = {
     "MONGODB_URI": MONGODB_URI,
@@ -129,7 +130,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        *FRONTEND_ORIGINS,
     ],
     allow_credentials=True,
     allow_methods=["*"],
