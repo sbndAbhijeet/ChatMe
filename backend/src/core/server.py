@@ -39,6 +39,19 @@ QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "documents_collection")
 
+required_settings = {
+    "MONGODB_URI": MONGODB_URI,
+    "DB_NAME": DB,
+    "CHAT_DB": CHAT_DB,
+    "BLOG_DB": BLOG_DB,
+    "NOTE_DB": NOTE_DB,
+    "USER_DB": USER_DB,
+    "DOCUMENTS_DB": DOC_DB,
+}
+missing_settings = [name for name, value in required_settings.items() if not value]
+if missing_settings:
+    raise RuntimeError(f"Missing backend configuration: {', '.join(missing_settings)}")
+
 collections = [CHAT_DB, BLOG_DB, NOTE_DB, USER_DB, DOC_DB]
 
 @asynccontextmanager
