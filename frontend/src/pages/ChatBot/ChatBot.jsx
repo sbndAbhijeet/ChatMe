@@ -95,11 +95,7 @@ function ChatBot() {
 
     try {
       let botResponse;
-      try {
-        botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds, selectedNoteIds);
-      } catch (error) {
-        botResponse = null;
-      }
+      botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds, selectedNoteIds);
 
       if(!botResponse || typeof botResponse !== "string"){
         setIsTyping(false);
@@ -166,7 +162,7 @@ function ChatBot() {
       setHistory(prev => 
         prev.map(chat => 
           chat.id === tempId ?
-          {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: "Sorry, something went wrong!" }]
+          {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: error.message || "Sorry, something went wrong!" }]
           } : chat 
         )
       );
