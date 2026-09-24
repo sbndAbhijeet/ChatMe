@@ -32,7 +32,7 @@ def get_llm(model_id, api_key=None):
         timeout=30,
     )
 
-DB_URI = os.getenv("MONOGB_URI")
+DB_URI = os.getenv("MONGODB_URI")
 # llm = get_llm(config.GLOBAL_MODEL)
 
 COLLECTION_NAME = "luminchat_checkpointer"
