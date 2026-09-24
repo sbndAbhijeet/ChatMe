@@ -19,7 +19,6 @@ import { useTools } from '../../hooks/GlobalTools';
 
 function ChatBot() {
   const [message, setMessage] = useState("");
-  const [displayedBotMessage, setDisplayedBotMessage] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState("");
   
@@ -94,66 +93,19 @@ function ChatBot() {
     )
 
     try {
-      let botResponse;
-      botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds, selectedNoteIds);
-
-      if(!botResponse || typeof botResponse !== "string"){
-        setIsTyping(false);
-        setHistory(prev =>
-          prev.map(chat =>
-            chat.id === tempId ?
-            {
-              ...chat,
-              messages: [
-                ...chat.messages.filter(msg => !msg.isLoading),
-                {sender: 'bot', message: "⚠️ Sorry, I couldn't process that. Please try again!"}
-              ]
-            } : chat
-          )
-        );
-        return;
-      }
-      
-
-      console.log(botResponse)
-      const botMessage = {sender: 'bot', message: ''}
-
-      setHistory(
-        prev => 
-          prev.map(chat => 
-            chat.id === tempId ?
-            {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), botMessage]}
-            : chat
-          )
-        );
-      
-      let index = 0;
-      const interval = setInterval(() => {
-        // if (!botResponse) return; // wait until botResponse is defined
-        setHistory(prev => prev.map(
-          chat => chat.id === tempId 
-          ? {
-            ...chat, 
-            messages: chat.messages.map((m,i) => i === chat.messages.length - 1 ?
-            {...m, message: botResponse.substring(0, index+1)} : m)
-          }
-          : chat
-        ))
-        index++;
-        if (index === botResponse.length) {
-          clearInterval(interval);
-          setIsTyping(false);
-
-          // Now insert the full bot message into history
-          setHistory(prev => prev.map(chat =>
-            chat.id === tempId
-              ? { ...chat, messages: [...chat.messages.slice(0, -1), { sender: 'bot', message: botResponse }] }
-              : chat
-          ));
-
-
-        }
-      }, 30);
+      const botResponse = await processUserInput(tempId, user_msg, selectedTools, globalModel, selectedPdfIds, selectedNoteIds, (token) => {
+        setHistory(prev => prev.map(chat => chat.id === tempId ? {
+          ...chat,
+          messages: chat.messages.map((item, index) => index === chat.messages.length - 1 && item.sender === 'bot'
+            ? {...item, isLoading: false, message: item.message + token} : item),
+        } : chat));
+      });
+      setHistory(prev => prev.map(chat => chat.id === tempId ? {
+        ...chat,
+        messages: chat.messages.map((item, index) => index === chat.messages.length - 1 && item.sender === 'bot'
+          ? {...item, isLoading: false, message: botResponse} : item),
+      } : chat));
+      setIsTyping(false);
     }
     catch (error) {
       console.error("Error:", error);
@@ -162,7 +114,7 @@ function ChatBot() {
       setHistory(prev => 
         prev.map(chat => 
           chat.id === tempId ?
-          {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: error.message || "Sorry, something went wrong!" }]
+          {...chat, messages: [...chat.messages.filter(msg => !msg.isLoading), { sender: 'bot', message: `⚠️ ${error.message || "Sorry, something went wrong!"}` }]
           } : chat 
         )
       );
@@ -255,7 +207,6 @@ function ChatBot() {
           </div>
         ) : (
           chatHistory.map((chat, index) => {
-            const isLast = index === chat.length-1;
             const isBot = chat.sender !== "user";
 
             return (
@@ -274,7 +225,7 @@ function ChatBot() {
                 ) : (
                   <div>
                     <NoteMarkdown>
-                      {isTyping && isLast && isBot ? displayedBotMessage : chat.message}
+                      {chat.message}
                     </NoteMarkdown>
                     {/* Small save icon */}
                     {isBot && (
