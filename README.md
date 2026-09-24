@@ -178,3 +178,17 @@ PDF search data lives in Qdrant. Set `QDRANT_URL` for a hosted persistent Qdrant
 PDF uploads accept `.pdf` filenames with a PDF file header and are limited to 10 MiB by default. Set `MAX_PDF_SIZE_MB` to a positive integer to change this limit. PDFs without extractable text are rejected; scanned PDFs require OCR, which this app does not currently provide.
 
 Startup creates a unique index on user email addresses. If an existing database contains duplicate email entries, resolve those duplicates before deploying this version; otherwise MongoDB will reject index creation.
+
+### Deployment smoke check
+
+Deploy the backend with the configured environment variables and start it with `uvicorn src.core.server:app --host 0.0.0.0 --port $PORT` (use your host's assigned port). `/health/live` confirms the web process is responding; `/health/ready` checks MongoDB and Qdrant connectivity and returns HTTP 503 if either is unavailable. Keep the production frontend and API on the same site for the current refresh-cookie policy.
+
+After registering a dedicated test account, run from `backend`:
+
+```bash
+python smoke_check.py https://your-api.example.com --email smoke@example.com
+python smoke_check.py https://your-api.example.com --email smoke@example.com --chat-model your-openrouter-model
+python smoke_check.py https://your-api.example.com --email smoke@example.com --pdf path/to/small-text.pdf
+```
+
+The script prompts for the account password, or reads `LUMIN_SMOKE_PASSWORD`. Basic checks are read-only; the optional chat and PDF checks create test data and delete it afterward. The chat check calls your model provider and may incur a charge. Verify login and token refresh through the deployed frontend browser, then restart the backend and confirm existing chats and PDF search still work. These checks require live MongoDB, Qdrant, and API credentials and are not part of a local syntax check.
