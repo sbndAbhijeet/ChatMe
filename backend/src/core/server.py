@@ -38,6 +38,20 @@ QDRANT_PATH = os.getenv("QDRANT_PATH")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "documents_collection")
+FRONTEND_ORIGINS = [origin.strip() for origin in os.getenv("FRONTEND_ORIGINS", "").split(",") if origin.strip()]
+
+required_settings = {
+    "MONGODB_URI": MONGODB_URI,
+    "DB_NAME": DB,
+    "CHAT_DB": CHAT_DB,
+    "BLOG_DB": BLOG_DB,
+    "NOTE_DB": NOTE_DB,
+    "USER_DB": USER_DB,
+    "DOCUMENTS_DB": DOC_DB,
+}
+missing_settings = [name for name, value in required_settings.items() if not value]
+if missing_settings:
+    raise RuntimeError(f"Missing backend configuration: {', '.join(missing_settings)}")
 
 collections = [CHAT_DB, BLOG_DB, NOTE_DB, USER_DB, DOC_DB]
 
@@ -77,12 +91,7 @@ async def lifespan(app: FastAPI):
         # initialize qdrant client (local or remote)
         q_client = init_qdrant(path=QDRANT_PATH, url=QDRANT_URL, api_key=QDRANT_API_KEY)
         qdrant_dal = QdrantDAL(q_client, QDRANT_COLLECTION)
-        # ensure collection exists
-        try:
-            qdrant_dal.ensure_collection()
-        except Exception:
-            # best-effort, will be recreated during first upsert
-            pass
+        # The first PDF upload creates the collection using its embedding dimension.
 
         collection_service = CollectionService(
             blog_dal=blog_dal,
@@ -116,7 +125,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        *FRONTEND_ORIGINS,
     ],
     allow_credentials=True,
     allow_methods=["*"],

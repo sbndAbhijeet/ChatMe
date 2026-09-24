@@ -96,7 +96,7 @@ async def process_save_responses(
 
     qdrant_dal = req.app.state.qdrant_dal
 
-    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_dal=qdrant_dal)
+    result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_dal=qdrant_dal, user_id=user_id)
 
     await req.app.state.chatbot_dal.save_sender_response(object_id, "user", user_input.message, user_id)
     if user_input.selected_document_ids:

@@ -2,10 +2,13 @@ from jose import jwt
 from datetime import datetime, timedelta
 import os
 import bcrypt
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Enforce SECRET_KEY in production mode
 SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG", "true").lower() in ("true", "1")
+DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1")
 if not SECRET_KEY:
     if not DEBUG:
         raise RuntimeError("SECRET_KEY environment variable is required in production mode!")

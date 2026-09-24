@@ -164,36 +164,11 @@ This allows:
 
 ## 🚀 Getting Started
 
-Instructions on how to set up and run the project locally will be available once the initial version stabilizes.
+Requirements: Python 3.12+, Node.js, MongoDB, and an OpenRouter API key for chat. PDF retrieval also requires an embedding model and Qdrant (local storage is suitable for development).
 
-### Prerequisites
+1. Copy `backend/.env.example` to `backend/.env`. Set MongoDB, database collection names, `SECRET_KEY`, and your model credentials.
+2. From `backend`, install the project dependencies using your Python package manager and run `uvicorn src.core.server:app --reload`.
+3. Copy `frontend/.env.example` to `frontend/.env.local`. Set `VITE_API_BASE_URL` to the backend URL ending in `/api`.
+4. From `frontend`, run `npm install` and `npm run dev`.
 
-- Node.js & npm
-- Python 3.9+ & pip
-- MongoDB (local or cloud)
-- Gemini / OpenAI API keys
-
----
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/sbndAbhijeet/ChatMe.git
-cd ChatMe
-
-# --- Frontend Setup ---
- cd frontend
- npm install
- npm run dev
-
-# --- Backend Setup ---
- cd backend
- uv pip install -r requirements.txt
- uvicorn src.core.server:app --reload
-
-# --- Environment Variables ---
-# Create a .env file
-GEMINI_API_KEY="your_gemini_key"
-MONGODB_URI="your_mongodb_connection_string"
-DEBUG="true"
+For production, set `DEBUG=false`, use a strong private `SECRET_KEY`, configure `FRONTEND_ORIGINS` with the frontend's exact origin, and set `VITE_API_BASE_URL` when building the frontend. A refresh cookie with `SameSite=Lax` requires frontend and API deployments to share the same site (for example, subdomains of one registered domain); a deployment on unrelated domains needs a separately designed cross-site cookie and CSRF policy. Use persistent storage for Qdrant and uploaded PDFs before deploying with ephemeral containers. Do not commit `.env` files.
