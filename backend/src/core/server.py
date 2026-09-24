@@ -76,6 +76,9 @@ async def lifespan(app: FastAPI):
         user_col = db[USER_DB]
         doc_col = db[DOC_DB]
 
+        # The index enforces uniqueness even for concurrent registrations.
+        await user_col.create_index("email", unique=True, name="unique_user_email")
+
         await chatbot_col.create_index(
             [
                 ("user_id", 1),
