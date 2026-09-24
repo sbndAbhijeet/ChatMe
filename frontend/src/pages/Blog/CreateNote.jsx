@@ -1,7 +1,8 @@
-import React, { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useBlog } from "../../hooks/BlogContext";
 import { useNotes } from "../../hooks/NoteContext";
+import NoteEditor from "../../components/NoteEditor";
 
 function CreateNote() {
   const navigate = useNavigate();
@@ -21,11 +22,10 @@ function CreateNote() {
   const [search, setSearch] = useState("");
 
   const [toast, setToast] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    console.log("At Create Note")
     if (location.state) {
-      console.log("Received:", location.state.content);
       const passedContent = location.state?.content || '';
       setContent(passedContent);
     }
@@ -42,6 +42,7 @@ function CreateNote() {
 
   const handleSave = async () => {
     if (!title.trim()) return showToast("Note title required");
+    if (!content.trim()) return showToast("Write something in your note");
 
     // validation first
     if (createNewBlog && !newBlogName.trim()) {
@@ -52,48 +53,32 @@ function CreateNote() {
       return showToast("Select a blog");
     }
 
-    if (createNewBlog) {
-      const data = {
-        "blog_name": newBlogName,
-        "note": {
-          title,
-          content,
-        },
-      };
-
-      createBlogWithNote(data);
-    } else {
-      const data = {
-        title,
-        content,
-      };
-
-      createNote(selectedBlogId, data);
+    setSaving(true);
+    try {
+      if (createNewBlog) {
+        const created = await createBlogWithNote({ blog_name: newBlogName.trim(), note: { title: title.trim(), content } });
+        if (created) navigate(`/blogs/${created.blog_id}/note/${created.note_id}`);
+      } else {
+        const created = await createNote(selectedBlogId, { title: title.trim(), content });
+        if (created) navigate(`/blogs/${selectedBlogId}/note/${created.note_id}`);
+      }
+    } catch {
+      showToast("Could not save the note. Please try again.");
+    } finally {
+      setSaving(false);
     }
-
-    const payload = {
-      title,
-      content,
-      blog: createNewBlog ? newBlogName : selectedBlog.blog_id
-    };
-
-    console.log(payload);
-
-    showToast("Note created");
-
-    setTimeout(() => navigate("/blogs"), 1200);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F7F9FB] to-[#EEF3F6]">
-      <div className="max-w-3xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
         <h1 className="text-3xl font-semibold">Create Note</h1>
         <p className="text-sm text-gray-500 mt-1 mb-6">
           Choose blog and start writing
         </p>
 
-        <div className="bg-white border rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-white border rounded-xl p-6 shadow-sm space-y-6 mb-6">
 
           {/* Toggle */}
           <div className="flex items-center justify-between">
@@ -181,23 +166,16 @@ function CreateNote() {
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="mt-2 w-full border rounded-lg px-4 py-3"
+              placeholder="Give this note a title"
+              className="mt-2 w-full rounded-lg border border-slate-200 px-4 py-3 text-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#618985]/40"
             />
           </div>
 
-          {/* Content */}
-          <div>
-            <label className="text-sm text-gray-600">Content</label>
-            <textarea
-              rows={8}
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              className="mt-2 w-full border rounded-lg px-4 py-3 resize-none"
-            />
-          </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
+        <NoteEditor value={content} onChange={setContent} />
+
+          <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={() => navigate(-1)}
               className="px-4 py-2 border rounded-md"
@@ -207,12 +185,12 @@ function CreateNote() {
 
             <button
               onClick={handleSave}
+              disabled={saving}
               className="px-4 py-2 rounded-md bg-[#618985] text-white"
             >
-              Save Note
+              {saving ? "Saving…" : "Save Note"}
             </button>
           </div>
-        </div>
       </div>
 
       {toast && (
