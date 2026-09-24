@@ -54,7 +54,7 @@ export const ChatHistoryProvider = (props) => {
         // );
 
         const { data, error } = await postMessage(docId, msg, tools, model, selectedDocumentIds, selectedNoteIds);
-        if (error) return;
+        if (error) throw new Error(error.response?.data?.detail || "Sorry, I couldn't process that. Please try again!");
 
         // Add AI reply when it arrives
         // setHistory(prev =>

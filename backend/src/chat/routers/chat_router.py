@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/chat", tags=["Chat"], dependencies=[Depends(get_
 
 
 class MessageInput(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=4000)
     tools: list
     model: str
     selected_document_ids: list[str] = Field(default_factory=list, max_length=10)
@@ -89,6 +89,9 @@ async def process_save_responses(
     chat = await req.app.state.chatbot_dal.get_current_chat(object_id, user_id)
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
+
+    if sum(item.get("sender") == "user" for item in chat.get("messages", [])) >= 80:
+        raise HTTPException(status_code=409, detail="This chat reached its 80-message limit. Start a new chat to continue.")
 
     user = await req.app.state.user_dal.get_user_by_id(user_id)
     user_api_key = user.get("openrouter_api_key") if user else None
