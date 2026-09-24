@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pathlib import Path
 import asyncio
+import logging
 import os
 import uuid
 from openai import OpenAI
@@ -19,6 +20,11 @@ router = APIRouter(prefix="/api/rag", tags=["rag"])
 STORAGE_DIR = Path(os.getenv("PDF_STORAGE_DIR") or Path(__file__).resolve().parents[2] / "storage" / "pdfs")
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 EMBED_MODEL = os.getenv("EMBED_MODEL")
+MAX_PDF_SIZE_MB = int(os.getenv("MAX_PDF_SIZE_MB", "10"))
+if MAX_PDF_SIZE_MB <= 0:
+    raise RuntimeError("MAX_PDF_SIZE_MB must be positive")
+MAX_PDF_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024
+logger = logging.getLogger(__name__)
 
 
 @router.post("/upload")
@@ -36,8 +42,21 @@ async def upload_pdf(
     out_path = STORAGE_DIR / filename
     doc = None
     try:
-        content = await file.read()
-        out_path.write_bytes(content)
+        if not (file.filename or "").lower().endswith(".pdf"):
+            raise HTTPException(415, "Only PDF files are supported")
+
+        total_bytes = 0
+        with out_path.open("wb") as output:
+            while chunk := await file.read(1024 * 1024):
+                if total_bytes == 0 and not chunk.startswith(b"%PDF-"):
+                    raise HTTPException(415, "File content is not a PDF")
+                total_bytes += len(chunk)
+                if total_bytes > MAX_PDF_BYTES:
+                    raise HTTPException(413, f"PDF exceeds the {MAX_PDF_SIZE_MB} MB limit")
+                output.write(chunk)
+        if total_bytes == 0:
+            raise HTTPException(422, "PDF is empty")
+
         pdf_hash = sha256_of_file(out_path)
         existing = await doc_dal.get_by_hash(pdf_hash, user_id=user_id)
         if existing:
@@ -57,10 +76,20 @@ async def upload_pdf(
             return process_pdf_and_upsert(qdrant_dal, out_path, str(doc["_id"]), user_id, pdf_hash)
 
         inserted_chunks = await asyncio.to_thread(_proc)
+        if inserted_chunks == 0:
+            raise HTTPException(422, "PDF has no extractable text")
         return {"status": "ok", "document": doc, "chunks_indexed": inserted_chunks}
     except Exception:
         if doc:
-            await doc_dal.delete_document(str(doc["_id"]))
+            document_id = str(doc["_id"])
+            try:
+                await asyncio.to_thread(qdrant_dal.delete_points_by_document, document_id, user_id)
+            except Exception:
+                logger.exception("Failed to clean up vectors for PDF %s", document_id)
+            try:
+                await doc_dal.delete_document(document_id)
+            except Exception:
+                logger.exception("Failed to clean up metadata for PDF %s", document_id)
         raise
     finally:
         # Search uses Qdrant, so the original PDF need not occupy local disk.
