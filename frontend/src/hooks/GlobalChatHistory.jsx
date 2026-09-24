@@ -43,7 +43,7 @@ export const ChatHistoryProvider = (props) => {
     //     )
     // }
 
-    const processUserInput = async (docId, msg, tools, model, selectedDocumentIds = []) => {
+    const processUserInput = async (docId, msg, tools, model, selectedDocumentIds = [], selectedNoteIds = []) => {
         // Add the user's message to history immediately
         // setHistory(prev =>
         //     prev.map(chat =>
@@ -53,7 +53,7 @@ export const ChatHistoryProvider = (props) => {
         //     )
         // );
 
-        const { data, error } = await postMessage(docId, msg, tools, model, selectedDocumentIds);
+        const { data, error } = await postMessage(docId, msg, tools, model, selectedDocumentIds, selectedNoteIds);
         if (error) return;
 
         // Add AI reply when it arrives
