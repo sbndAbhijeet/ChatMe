@@ -20,9 +20,9 @@ export async function getOngoingChat (docId) {
     }
 }
 
-export async function create_new_chat(chat_id){
+export async function create_new_chat(){
     try {
-        const res = await apiClient.post(`/chat/chatbot/lists/${chat_id}`)
+        const res = await apiClient.post(`/chat/chatbot`)
         return {data: res.data, error: null}
     } catch(error){
         return {data: null, error: error};
@@ -57,27 +57,3 @@ export const deleteChat = async (docId) => {
     }
 }
 
-/* 
-getHistory:
-[
-    {
-        "id": "68973238805046d1e4aa0b44",
-        "chat_id": 2,
-        "title": "New Chat - 2",
-        "messages_count": 0
-    },
-    {
-        "id": "68973227805046d1e4aa0b43",
-        "chat_id": 1,
-        "title": "New Chat - 1",
-        "messages_count": 4
-    },
-    {
-        "id": "689739f635ca31cd8e5c5b6a",
-        "chat_id": 1,
-        "title": "New Chat - <built-in function id>",
-        "messages_count": 0
-    }
-]
-------------------------------------
-*/

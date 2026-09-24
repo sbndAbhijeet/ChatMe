@@ -59,6 +59,15 @@ async def lifespan(app: FastAPI):
         user_col = db[USER_DB]
         doc_col = db[DOC_DB]
 
+        await chatbot_col.create_index(
+            [
+                ("user_id", 1),
+                ("updated_at", -1),
+            ],
+            name="user_updated_at_idx",
+            background=True,
+        )
+
         chatbot_dal = ChatBot(chatbot_col)
         blog_dal = BlogDAL(blog_col)
         note_dal = NoteDAL(note_col)

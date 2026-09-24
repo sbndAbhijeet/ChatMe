@@ -3,12 +3,16 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import ReturnDocument
 from pydantic import BaseModel
 from uuid import uuid4
+from datetime import datetime, timezone
+
+from langgraph.checkpoint.mongodb import MongoDBSaver
+
+from ..chat.main import COLLECTION_NAME, DB_URI
 
 # Need to change the motor to pymongo (Will be deprecated soon)
 
 class HistorySummary(BaseModel):# deatiled history of each chat
     id: str
-    chat_id: int
     title: str
     messages: list
     messages_count: int
@@ -17,7 +21,6 @@ class HistorySummary(BaseModel):# deatiled history of each chat
     def from_doc(doc) -> "HistorySummary":
         return HistorySummary(
             id=str(doc["_id"]),
-            chat_id=doc["chat_id"],
             title=doc["title"],
             messages=doc["messages"],
             messages_count=doc["messages_count"]
@@ -38,7 +41,6 @@ class ChatMessages(BaseModel):
     
 class ChatList(BaseModel):
     id: str
-    chat_id: int
     title: str
     messages: list[ChatMessages]
 
@@ -46,7 +48,6 @@ class ChatList(BaseModel):
     def from_doc(doc) -> "ChatList":
         return ChatList(
             id=str(doc["_id"]),
-            chat_id=doc["chat_id"],
             title=doc["title"],
             messages=[ChatMessages.from_doc(item) for item in doc["messages"]]
         )
@@ -54,6 +55,20 @@ class ChatList(BaseModel):
 class ChatBot:
     def __init__(self, chatbot_collection: AsyncIOMotorCollection):
         self._chatbot_collection = chatbot_collection
+
+    @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(timezone.utc)
+
+    @staticmethod
+    def _cleanup_langgraph_thread(thread_id: str) -> None:
+        if not DB_URI:
+            return
+        try:
+            with MongoDBSaver.from_conn_string(DB_URI, "LuminAI_db", COLLECTION_NAME) as saver:
+                saver.delete_thread(thread_id)
+        except Exception as exc:
+            print(f"LangGraph checkpoint cleanup failed for thread {thread_id}: {exc}")
 
     async def is_new_thread(
             self, 
@@ -75,37 +90,49 @@ class ChatBot:
         
         return False
     
-    async def create_new_chat(self, chat_id: int, user_id: str, session=None) -> str:
+    async def create_new_chat(self, user_id: str, session=None) -> str:
+        now = self._utc_now()
         response = await self._chatbot_collection.insert_one(
             {
-                "chat_id": chat_id,
                 "user_id": user_id,
-                "title": f"New Chat - {chat_id}",
+                "title": "New Chat",
                 "messages": [],
+                "created_at": now,
+                "updated_at": now,
             },
             session=session,
         )
         return str(response.inserted_id)
     
     async def get_chat_history(self, user_id: str, session=None):
-        cursor = self._chatbot_collection.aggregate(
+        fallback_epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        cursor = await self._chatbot_collection.aggregate(
             [
                 {
                     "$match": {"user_id": user_id}
                 },
                 {
+                    "$addFields": {
+                        "activity_ts": {
+                            "$ifNull": ["$updated_at", {"$ifNull": ["$created_at", fallback_epoch]}]
+                        }
+                    }
+                },
+                {
                     "$project":{
                         "_id": 1,
-                        "chat_id": 1,
                         "title": 1,
                         "messages": 1,
+                        "created_at": 1,
+                        "updated_at": 1,
+                        "activity_ts": 1,
                         "messages_count": {
                             "$size": "$messages"
                         }   
                     }
                 },
                 {
-                    "$sort": {"chat_id": 1}
+                    "$sort": {"activity_ts": -1, "_id": -1}
                 }
             ]
         )
@@ -147,6 +174,9 @@ class ChatBot:
                         "sender": sender,
                         "message": msg,
                     }   
+                },
+                "$set": {
+                    "updated_at": self._utc_now(),
                 }
             },
             session=session,
@@ -166,6 +196,8 @@ class ChatBot:
                 {"_id": ObjectId(doc_id), "user_id": user_id},
                 session=session
             )
+            if response.deleted_count == 1:
+                self._cleanup_langgraph_thread(str(doc_id))
             return response.deleted_count == 1
     
     async def rename_chat_title(
@@ -179,7 +211,8 @@ class ChatBot:
             {"_id": ObjectId(id), "user_id": user_id},
             {
                 "$set": {
-                    "title": title
+                    "title": title,
+                    "updated_at": self._utc_now(),
                 }
             },
             session=session,

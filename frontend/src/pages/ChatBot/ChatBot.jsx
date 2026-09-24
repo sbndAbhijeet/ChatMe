@@ -182,16 +182,15 @@ function ChatBot() {
     setMessage(""); // Clear input immediately
 
     if(chat_session === "0"){
-      const newId = history.length > 0 ? history.length+1 : 1;
-      const doc_id = await createChat(newId);
+      const createdChat = await createChat();
+      const doc_id = createdChat?.id;
       if (!doc_id) return;
       
       setHistory(prev => ([
         ...prev,
         {
           "id": doc_id,
-          "chat_id": newId,
-          "title": `New Chat - ${newId}`,
+          "title": createdChat?.title ?? "New Chat",
           "messages": [],
         }
       ]));

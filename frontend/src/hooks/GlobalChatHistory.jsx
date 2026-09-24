@@ -68,13 +68,13 @@ export const ChatHistoryProvider = (props) => {
     };
 
 
-    const createChat = async (chatId) => {
-        const {data, error} = await create_new_chat(chatId);
+    const createChat = async () => {
+        const {data, error} = await create_new_chat();
         if(error){
             alert("Error in creating new chat: "+error)
             return;
         }
-        return data.id;
+        return data;
     }
 
     const renameChat = async (docId, title) => {

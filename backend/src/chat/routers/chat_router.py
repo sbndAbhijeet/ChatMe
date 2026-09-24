@@ -51,18 +51,25 @@ async def get_current_chat(
     req: Request,
     user_id: str = Depends(get_current_user)
 ):
-    chat = await req.app.state.chatbot_dal.get_current_chat(doc_id, user_id)
+    try:
+        object_id = ObjectId(doc_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    chat = await req.app.state.chatbot_dal.get_current_chat(object_id, user_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
     return {"id": str(chat["_id"]), "messages": chat["messages"]}
 
-@router.post("/chatbot/lists/{chat_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/chatbot", status_code=status.HTTP_201_CREATED)
 async def create_new_chat(
-    chat_id: int,
     req: Request,
     user_id: str = Depends(get_current_user)
 ):
     return {
-        "id": await req.app.state.chatbot_dal.create_new_chat(chat_id, user_id),
-        "title": f"New Chat - {chat_id}"
+        "id": await req.app.state.chatbot_dal.create_new_chat(user_id),
+        "title": "New Chat"
     }
 
 
@@ -73,32 +80,30 @@ async def process_save_responses(
     req: Request,
     user_id: str = Depends(get_current_user)
 ):
-    # print(f"Received request: id={id}, message={user_input.message}"
     try:
-        object_id = ObjectId(id)  # Convert string to ObjectId
+        object_id = ObjectId(id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    chat = await req.app.state.chatbot_dal.get_current_chat(object_id, user_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
 
     user = await req.app.state.user_dal.get_user_by_id(user_id)
     user_api_key = user.get("openrouter_api_key") if user else None
     
     is_new = await req.app.state.chatbot_dal.is_new_thread(object_id, user_id)
 
-    # pass selected document ids and qdrant DAL for RAG retrieval
     qdrant_dal = req.app.state.qdrant_dal
 
     result = await get_ai_response(user_input.message, id, user_input.tools, user_input.model, user_api_key, selected_document_ids=user_input.selected_document_ids, qdrant_dal=qdrant_dal)
 
-
     await req.app.state.chatbot_dal.save_sender_response(object_id, "user", user_input.message, user_id)
-    # persist selected document ids as a separate system message for traceability
     if user_input.selected_document_ids:
         import json
         await req.app.state.chatbot_dal.save_sender_response(object_id, "system", f"selected_documents:{json.dumps(user_input.selected_document_ids)}", user_id)
     await req.app.state.chatbot_dal.save_sender_response(object_id, "bot", result, user_id)
 
-    # Rewriting Title for new Chats
-    # print(is_new)
     if is_new:
         new_title = await generate_title(user_input.message, user_api_key)
         print("new title: ",new_title)
@@ -112,7 +117,15 @@ async def delete_chat(
     req: Request,
     user_id: str = Depends(get_current_user)
 ) -> bool:
-    return await req.app.state.chatbot_dal.delete_chat(doc_id, user_id)
+    try:
+        object_id = ObjectId(doc_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    deleted = await req.app.state.chatbot_dal.delete_chat(object_id, user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return deleted
 
 
 @router.patch("/chat_rename/{doc_id}")
@@ -122,4 +135,12 @@ async def rename_chat_title(
     req: Request,
     user_id: str = Depends(get_current_user)
 ):
-    return await req.app.state.chatbot_dal.rename_chat_title(doc_id, request.title, user_id)
+    try:
+        object_id = ObjectId(doc_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    updated = await req.app.state.chatbot_dal.rename_chat_title(object_id, request.title, user_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return updated
